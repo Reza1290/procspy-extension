@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Side Panel Extension</title>
+  <script src="./index.global.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+</head>
+<body class="dark h-screen flex flex-col bg-gradient-to-b from-black to-black/90 text-slate-200 text-sm">
+  <!-- Header -->
+  <div class="p-4 bg-gradient-to-r  border-b border-white/10 flex items-center justify-between">
+    <h1 class="text-base font-semibold bg-clip-text text-slate-200">Proctored Exam</h1>
+    <button id="start" class="flex items-center gap-2 bg-blue-600 p-2 border border-white/10 rounded-md font-semibold cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-monitor">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+      Start Proctor
+    </button>
+  </div>
+  
+  
+  <!-- Chat Container -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Chat Header -->
+    <div class="p-3 bg-sidebar-dark border-b border-white/10 font-semibold text-slate-200 flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span class="text-slate-200">Chat With Proctor</span>
+    </div>
+    
+    <!-- Chat Messages -->
+    <div class="flex-1 p-4 overflow-y-auto bg-sidebar-darker" id="chat-messages">
+      <!-- Incoming Message -->
+      <div class="mb-4 max-w-[85%] mr-auto ">
+        <div class="flex items-center mb-1">
+          <div class="text-sm font-semibold text-slate-200">John Smith</div>
+          <div class="text-xs text-slate-400 ml-2">10:30 AM</div>
+        </div>
+        <div class="p-3 bg-black/10 rounded-lg text-slate-200 ">
+          I found this search result particularly interesting. Can we share it with the team?
+        </div>
+      </div>
+      
+      <!-- Outgoing Message -->
+      <div class="mb-4 max-w-[85%] ml-auto">
+        <div class="flex items-center mb-1 justify-end">
+          <div class="text-sm font-semibold text-slate-200">You</div>
+          <div class="text-xs text-slate-400 ml-2">10:31 AM</div>
+        </div>
+        <div class="p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-white">
+          Sure, let me share my screen. I've also found some code that might be useful.
+        </div>
+      </div>
+      
+      <!-- Incoming Message with Code -->
+      <div class="mb-4 max-w-[85%] mr-auto">
+        <div class="flex items-center mb-1">
+          <div class="text-sm font-semibold text-slate-200">Sarah Johnson</div>
+          <div class="text-xs text-slate-400 ml-2">10:32 AM</div>
+        </div>
+        <div class="p-3 bg-sidebar-dark rounded-lg text-slate-200">
+          <p class="mb-2">Great! By the way, here's the snippet we were discussing:</p>
+          <div class="bg-gray-900 p-3 rounded-md border border-white/10 font-mono text-xs overflow-x-auto">
+            <span class="text-blue-400">const</span> button = document.<span class="text-purple-400">querySelector</span>(<span class="text-green-400">'.screen-share-btn'</span>);<br><br>
+            button.<span class="text-purple-400">addEventListener</span>(<span class="text-green-400">'click'</span>, <span class="text-blue-400">async</span> <span class="text-blue-400">function</span>() {<br>
+            &nbsp;&nbsp;<span class="text-blue-400">try</span> {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">const</span> stream = <span class="text-blue-400">await</span> navigator.mediaDevices.<span class="text-purple-400">getDisplayMedia</span>();<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// Use the stream</span><br>
+            &nbsp;&nbsp;} <span class="text-blue-400">catch</span>(err) {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="text-purple-400">error</span>(<span class="text-green-400">'Error:'</span>, err);<br>
+            &nbsp;&nbsp;}<br>
+            });
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Chat Input -->
+    <div class="p-3 bg-sidebar-dark border-t border-white/10 flex">
+      <input type="text" placeholder="Type a message..." 
+             class="flex-1 px-3 py-2 bg-sidebar-darker border border-white/10 rounded-md mr-2 outline-none text-sm text-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-slate-500">
+      <button onclick="sendMessage()" class="bg-blue-600 text-white rounded-md p-2 px-3 flex items-center justify-center shadow-md ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <script src="js/sidepanel.js"></script>
+  <script>
+    // Basic UI functionality
+    document.querySelector('button').addEventListener('click', function() {
+      alert('Screen sharing functionality would be implemented here with the Chrome Extensions API');
+    });
+    
+    const sendButton = document.querySelector('.bg-gradient-to-r.from-blue-500.to-purple-500.text-white.rounded-md.w-8');
+    sendButton.addEventListener('click', function() {
+      sendMessage();
+    });
+    
+    // Allow sending message with Enter key
+    document.querySelector('input[type="text"]').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    function sendMessage() {
+      const input = document.querySelector('input[type="text"]');
+      const message = input.value.trim();
+      
+      if (message) {
+        const chatMessages = document.getElementById('chat-messages');
+        
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        const timeString = `${formattedHours}:${formattedMinutes} ${ampm}`;
+        
+        const messageHTML = `
+          <div class="mb-4 max-w-[85%] ml-auto">
+            <div class="flex items-center mb-1 justify-end">
+              <div class="text-sm font-semibold text-slate-200">You</div>
+              <div class="text-xs text-slate-400 ml-2">${timeString}</div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-white">
+              ${message}
+            </div>
+          </div>
+        `;
+        
+        chatMessages.insertAdjacentHTML('beforeend', messageHTML);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Clear input
+        input.value = '';
+      }
+    }
+  </script>
+</body>
+</html> 

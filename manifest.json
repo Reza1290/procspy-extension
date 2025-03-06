@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Procspy",
+  "version": "1.0",
+  "description": "Automated Proctoring System Extension",
+  "author": "Reza1290",
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Click to Begin"
+  },
+  "commands": {
+    "_execute_action": {  
+      "suggested_key": {
+        "default": "Ctrl+B",
+        "mac": "Command+B"
+      }
+    },
+    "copyShortcut": {
+      "suggested_key": {
+        "default": "Ctrl+C"
+      },
+      "description": "Detect Copy"
+    },
+    "screenshotShortcut": {
+      "suggested_key": {
+        "default": "Alt+Tab"
+      },
+      "description": "Detect Screenshot"
+    }
+  },
+  "host_permissions": [
+    "http://*/",
+    "https://*/*"
+  ],
+  "permissions": [
+    "sidePanel",
+    "scripting",
+    "tabs",
+    "activeTab"
+  ],
+  "icons": {
+    "16": "assets/images/icon-16.png",
+    "48": "assets/images/icon-48.png",
+    "128": "assets/images/icon-128.png"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "procspy-extension",
+  "version": "1.0.0",
+  "description": "This example demonstrates how to display the side panel only on google.com using the [Side Panel API](https://developer.chrome.com/docs/extensions/reference/sidePanel/). It also allows users to open the side panel by clicking on the [action icon](https://developer.chrome.com/docs/extensions/reference/action/) or a keyboard shortcut.",
+  "main": "index.global.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify ./content.js -o ./bundle.js"
+  },
+  "author": "Reza1290",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^17.0.1",
+    "mediasoup-client": "^3.8.2",
+    "socket.io-client": "^4.8.1"
+  }
+}
