@@ -5,7 +5,8 @@
   "description": "Automated Proctoring System Extension",
   "author": "Reza1290",
   "background": {
-    "service_worker": "service-worker.js"
+    "service_worker": "service-worker.js",
+    "type": "module"
   },
   "action": {
     "default_title": "Click to Begin"
@@ -38,7 +39,11 @@
     "sidePanel",
     "scripting",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "history",
+    "system.cpu",
+    "system.memory"
+
   ],
   "icons": {
     "16": "assets/images/icon-16.png",
