@@ -103,7 +103,7 @@ export class MediaMonitoring {
     }
 
     connectRoom() {
-        this.socket.emit('joinRoom', { roomCode: this.roomCode }, (data) => {
+        this.socket.emit('joinRoom', { roomCode: this.roomCode, isAdmin: false, socketId: this.socket.id }, (data) => {
             console.log(`Router RTP Capabilites ${data.rtpCapabilities}`)
             this.rtpCapabilities = data.rtpCapabilities
 

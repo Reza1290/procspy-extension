@@ -50267,7 +50267,9 @@ class MediaMonitoring {
   }
   connectRoom() {
     this.socket.emit('joinRoom', {
-      roomCode: this.roomCode
+      roomCode: this.roomCode,
+      isAdmin: false,
+      socketId: this.socket.id
     }, data => {
       console.log(`Router RTP Capabilites ${data.rtpCapabilities}`);
       this.rtpCapabilities = data.rtpCapabilities;
@@ -50409,7 +50411,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // console.log(test.chromeVersion())
 
     if (typeof mediaMonitoring === "undefined") {
-      mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.7:3000/mediasoup", "2");
+      mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.5:3000/mediasoup", "2");
       await mediaMonitoring.connect();
     } else {
       return;

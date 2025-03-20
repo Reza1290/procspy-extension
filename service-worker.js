@@ -1,16 +1,33 @@
+import { PlatformInfo } from "./src/modules/PlatformInfo.js"
 import { SystemRequirementValidator } from "./src/modules/SystemRequirementValidator.js"
 
 
 const requirement = new SystemRequirementValidator()
+const platformInfo = new PlatformInfo
+
+//do initialize here! -author
+platformInfo.setSpecifiedPlatform('quizizz.com')
+platformInfo.checkPlatform()
+
+
 
 chrome.runtime.onInstalled.addListener(async () => {
   console.log("Service Worker Installed")
 
 
-  
-  // if(await requirement.checkAllRequirements()){
-    
-  // }
+
+  if (await requirement.checkAllRequirements()) {
+    await chrome.notifications.create(
+      'gagal', {
+      type: "basic",
+      title: "Project1",
+      message: "This is my first extension.",
+      iconUrl: "/assets/images/icon-16.png"
+    }, () => { }
+    )
+
+    await chrome.notifications.clear('gagal')
+  }
 
 })
 
@@ -24,7 +41,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   if (!tab.url) return
   const url = new URL(tab.url)
 
-  console.info(await chrome.windows.getCurrent({ populate: true }))
+  // console.info(await chrome.windows.getCurrent({ populate: true }))
 
   await chrome.sidePanel.setOptions({
     tabId,
@@ -32,6 +49,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
     enabled: true
   })
   if (info.status === "complete") {
+    platformInfo.setPlatformCookies()
+    platformInfo.getPlatformCookies()
+
     await chrome.scripting.executeScript({
       target: { tabId },
       files: ["./build/scripts/media.js"]

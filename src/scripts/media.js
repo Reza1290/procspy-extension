@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         if(typeof mediaMonitoring === "undefined"){
             mediaMonitoring = new MediaMonitoring(
-                "https://192.168.2.7:3000/mediasoup", "2"
+                "https://192.168.2.5:3000/mediasoup", "2"
             )
             
             await mediaMonitoring.connect()

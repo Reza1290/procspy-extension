@@ -42,7 +42,10 @@
     "activeTab",
     "history",
     "system.cpu",
-    "system.memory"
+    "system.memory",
+    "notifications",
+    "cookies",
+    "storage"
 
   ],
   "icons": {
