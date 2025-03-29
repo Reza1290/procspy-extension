@@ -159,7 +159,7 @@ export class MediaMonitoring {
                     await this.socket.emit('transport-produce', {
                         kind: parameters.kind,
                         rtpParameters: parameters.rtpParameters,
-                        appData: {...parameters.appData, socketId : this.socket.id},
+                        appData: { ...parameters.appData, socketId: this.socket.id },
                     }, ({ id, producersExist }) => {
                         callback({ id })
 
@@ -181,51 +181,64 @@ export class MediaMonitoring {
         this.cameraProducer = await this.producerTransport.produce(this.cameraParams)
         this.microphoneProducer = await this.producerTransport.produce(this.microphoneParams)
 
-        this.audioProducer.on('trackended', () => {
+        this.audioProducer.on('trackended', async () => {
             console.log('audio track ended')
-
+            await chrome.notifications.create("alert-audio", {
+                type: "basic",
+                iconUrl: "assets/images/icon-16.png",  
+                title: "System Alert",
+                message: "Your Audio Screen is disconnected. Please try to reconnect it!"
+            });
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close audio track
         })
 
         this.audioProducer.on('transportclose', () => {
             console.log('audio transport ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close audio track
         })
 
         this.videoProducer.on('trackended', () => {
             console.log('video track ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close video track
         })
 
         this.videoProducer.on('transportclose', () => {
             console.log('video transport ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close audio track
         })
 
         this.cameraProducer.on('trackended', () => {
             console.log('camera track ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close camera track
         })
 
         this.cameraProducer.on('transportclose', () => {
             console.log('camera transport ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close audio track
         })
 
         this.microphoneProducer.on('trackended', () => {
             console.log('microphone track ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close microphone track
         })
 
         this.microphoneProducer.on('transportclose', () => {
             console.log('microphone transport ended')
 
+            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
             // close audio track
         })
     }

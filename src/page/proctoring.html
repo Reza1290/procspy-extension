@@ -1,0 +1,90 @@
+<div id="proctoring-page" class="flex h-screen w-full flex-col bg-gray-950">
+    <div class="flex flex-col items-center justify-center gap-2 border-b border-white/10 px-5 py-5 text-slate-100">
+        <h1 class="text-xl font-semibold">Procspy 1.0</h1>
+        <p class="rounded-md bg-white/10 p-1 px-2 text-center text-sm italic text-slate-300">You are being proctored,
+            please be wise.</p>
+    </div>
+    <div class="flex gap-4 bg-gray-800/30 p-5 border-white/10 border-b">
+        <button class="w-full rounded-md px-5 py-2 font-semibold text-white bg-red-700 cursor-pointer" id="proctor-state-button">Stop
+            Proctor</button>
+
+    </div>
+    <div class="flex flex-col  bg-gray-800/30 p-5 py-1 border-white/10 border-b cursor-pointer">
+        <div class="flex justify-between gap-4 w-full p-1" id="info-detail-button">
+            <div class="flex justify-center w-full">
+                <p class="text-center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Info Detail</p>
+
+            </div>
+            <button class="w-4 fill-white rotate-180"><svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                    <path
+                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
+                </svg>
+            </button>
+        </div>
+        <div id="info-detail" class="p-5 transition-all h-0 hidden">
+            <table class="w-full ">
+                <tr>
+                    <td colspan="2">
+                        <div class="border border-white/10 h-20 rounded-md bg-gray-950/50">
+
+
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-1 pt-2 font-semibold w-1/3">IP Address</td>
+                    <td class="p-1 pt-2">192.168.0.2</td>
+                </tr>
+                <tr>
+                    <td class="p-1 font-semibold w-1/3">Average Ping</td>
+                    <td class="p-1">20ms</td>
+                </tr>
+                <tr>
+                    <td class="p-1 font-semibold w-1/3">Last Ping</td>
+                    <td class="p-1">20ms</td>
+                </tr>
+                <tr>
+                    <td class="p-1 font-semibold w-1/3">Packet Loss</td>
+                    <td class="p-1">20ms</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="alert-messages" class="hidden">
+        <div class="flex gap-4 bg-red-600 p-5 py-3 justify-between">
+            <p>You have to reconnect in 10 seconds</p>
+        </div>
+    </div>
+    <div class="flex flex-col justify-end grow p-5 text-slate-200 gap-5">
+        <div class="flex flex-col items-end w-full gap-2">
+            <div class="flex justify-between items-center gap-2">
+                <h1>me</h1>
+                <div class="w-4 h-4 bg-white/10 rounded-full max-w-2/3">
+
+                </div>
+            </div>
+            <div class="p-2 bg-blue-600 rounded-md ">
+                <p>Hello this is my message</p>
+            </div>
+        </div>
+        <div class="flex flex-col items-start w-full gap-2">
+            <div class="flex justify-between items-center gap-2 flex-row-reverse">
+                <h1>me</h1>
+                <div class="w-4 h-4 bg-white/10 rounded-full">
+
+                </div>
+            </div>
+            <div class="p-2 bg-blue-600/70 rounded-md max-w-2/3">
+                <p>Hello this is my message Hello this is my message Hello this is my message Hello this is my message
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="flex justify-center gap-4 bg-gray-800/30 p-5 border-white/10 border-t">
+        <!-- <small class="text-red-300 italic">*Make sure to press thetart Proctor first</small> -->
+        <input type="text" name="" id="chatbox" class="w-full rounded-md border border-white/10 bg-white/5 px-2 py-1"
+            placeholder="Type a message" />
+        <!-- <button class="w-full rounded-md px-5 py-2 font-semibold text-white bg-gray-800 cursor-pointer">Start Procotor</button> -->
+    </div>
+</div>

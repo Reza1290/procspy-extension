@@ -50343,44 +50343,66 @@ class MediaMonitoring {
     this.videoProducer = await this.producerTransport.produce(this.videoParams);
     this.cameraProducer = await this.producerTransport.produce(this.cameraParams);
     this.microphoneProducer = await this.producerTransport.produce(this.microphoneParams);
-    this.audioProducer.on('trackended', () => {
+    this.audioProducer.on('trackended', async () => {
       console.log('audio track ended');
-
+      await chrome.notifications.create("alert-audio", {
+        type: "basic",
+        iconUrl: "assets/images/icon-16.png",
+        title: "System Alert",
+        message: "Your Audio Screen is disconnected. Please try to reconnect it!"
+      });
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close audio track
     });
     this.audioProducer.on('transportclose', () => {
       console.log('audio transport ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close audio track
     });
     this.videoProducer.on('trackended', () => {
       console.log('video track ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close video track
     });
     this.videoProducer.on('transportclose', () => {
       console.log('video transport ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close audio track
     });
     this.cameraProducer.on('trackended', () => {
       console.log('camera track ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close camera track
     });
     this.cameraProducer.on('transportclose', () => {
       console.log('camera transport ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close audio track
     });
     this.microphoneProducer.on('trackended', () => {
       console.log('microphone track ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close microphone track
     });
     this.microphoneProducer.on('transportclose', () => {
       console.log('microphone transport ended');
-
+      chrome.runtime.sendMessage({
+        action: "RESTART_PROCTORING"
+      });
       // close audio track
     });
   }
@@ -50404,23 +50426,70 @@ var _MediaMonitoring = require("../modules/MediaMonitoring.js");
 require('dotenv').config();
 let mediaMonitoring;
 let test;
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.action === "start_monitoring") {
-    console.log('hello');
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log(message);
+  if (message.action === "PROCTOR_STARTED") {
+    (async () => {
+      console.log('hello');
 
-    // console.log(test.chromeVersion())
+      // console.log(test.chromeVersion())
 
-    if (typeof mediaMonitoring === "undefined") {
-      mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.5:3000/mediasoup", "2");
-      await mediaMonitoring.connect();
-    } else {
-      return;
-    }
-    if (mediaMonitoring.socketConnected) {
-      mediaMonitoring.getMediaDevices();
-      mediaMonitoring.sendMessage('log-message', 'connected-from-extension');
-    }
+      if (typeof mediaMonitoring === "undefined") {
+        mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.5:3000/mediasoup", "2");
+        await mediaMonitoring.connect();
+      } else {
+        return;
+      }
+      if (mediaMonitoring.socketConnected) {
+        mediaMonitoring.getMediaDevices();
+        mediaMonitoring.sendMessage('log-message', 'connected-from-extension');
+        chrome.runtime.sendMessage({
+          action: "UPDATE_PROCTOR_STATE",
+          data: {
+            proctor_state: "resume"
+          }
+        });
+      }
+      sendResponse({
+        status: true,
+        data: {}
+      });
+    })();
+    return true;
   }
+
+  // if (message.action === "MEDIA_DEVICES_VALIDATOR") {
+
+  //     try {
+  //         let resData = {}
+  //         setTimeout(async () => {
+  //             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+  //             const devices = await navigator.mediaDevices.enumerateDevices();
+
+  //             const mediaDevices = devices.filter(device =>
+  //                 device.kind === "videoinput" || device.kind === "audioinput"
+  //             );
+  //             const cam = stream.getVideoTracks()[0].getSettings()
+  //             const mic = stream.getAudioTracks()[0].getSettings()
+  //             console.log("Active Devices:", { cam, mic });
+
+  //             resData = { cam, mic }
+  //             await chrome.runtime.sendMessage({ action: "MEDIA_DEVICES_LIST", stream: { cam, mic } }, function (data) {
+  //                 resData = data
+  //             });
+
+  //             stream.getTracks().forEach(track => track.stop());
+  //         }, 1000)
+  //     } catch (error) {
+  //         console.error("Error accessing media devices:", error);
+  //         sendResponse({ error: error.message });
+
+  //     }
+
+  //     return true
+
+  // }
 
   // if (message.action === "get_title") {
   //     sendResponse({ title: document.title });
