@@ -185,26 +185,20 @@ document.addEventListener("click", function (event) {
     });
 
     try {
-      let resData = {}
-      setTimeout(async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-        const devices = await navigator.mediaDevices.enumerateDevices();
-
-        const mediaDevices = devices.filter(device =>
-          device.kind === "videoinput" || device.kind === "audioinput"
-        );
-        const cam = stream.getVideoTracks()[0].getSettings()
-        const mic = stream.getAudioTracks()[0].getSettings()
-        console.log("Active Devices:", { cam, mic });
-
-        resData = { cam, mic }
-        await chrome.runtime.sendMessage({ action: "MEDIA_DEVICES_LIST", stream: { cam, mic } }, function (data) {
-          resData = data
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const originalTabId = tabs[0].id;
+      
+        
+        chrome.tabs.create({
+          url: chrome.runtime.getURL("ask.html"),
+          active: true
         });
-
-        stream.getTracks().forEach(track => track.stop());
-      }, 1000)
+        
+        // chrome.runtime.sendMessage({
+        //   action: "REDIRECT_BACK",
+        //   tabId: originalTabId
+        // });
+      });
 
     } catch (error) {
       console.error("Error accessing media devices:", error);

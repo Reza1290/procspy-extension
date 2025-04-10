@@ -57,10 +57,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const device = new DeviceInfo();
       const deviceInfo = await device.getAllInfo()
 
-      sendResponse({status: true, data: {
-        proctor_state: proctorState.proctor_state,
-        deviceInfo
-      }})
+      sendResponse({
+        status: true, data: {
+          proctor_state: proctorState.proctor_state,
+          deviceInfo
+        }
+      })
     })()
 
     return true
@@ -120,10 +122,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if(message.action === "RESTART_PROCTORING"){
-    (async()=>{
+  if (message.action === "RESTART_PROCTORING") {
+    (async () => {
       const tab = await chrome.tabs.reload(lockedTabId)
-      await chrome.tabs.update(lockedTabId, {active: true})
+      await chrome.tabs.update(lockedTabId, { active: true })
     })()
     return true
   }
@@ -210,10 +212,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
 
   }
+  // if (message.action === "REDIRECT_BACK") {
+  //   (async () => {
+  //     savedOriginalTabId = message.tabId;
+
+  //     if (savedOriginalTabId !== null) {
+  //       chrome.tabs.update(savedOriginalTabId, { active: true });
+  //     }
+  //   })()
+
+  //   return true
+  // }
 
   if (message.action === "MEDIA_DEVICES_LIST") {
 
     (async () => {
+
+      if (sender.tab && sender.tab.id) {
+        chrome.tabs.remove(sender.tab.id);
+      }
+
       console.log("Received media devices list:", message);
       requirement.setDevicesList(message.stream);
 
@@ -231,14 +249,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       const state = await chrome.storage.session.get(["proctor_state"])
 
-      if(state.proctor_state){
+      if (state.proctor_state) {
 
         sendResponse({
           status: true, data: {
             proctor_state: state.proctor_state
           }
         })
-      }else{
+      } else {
         sendResponse({
           status: true, data: {
           }
