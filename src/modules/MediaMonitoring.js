@@ -4,11 +4,13 @@ import { io } from 'socket.io-client'
 export class MediaMonitoring {
 
 
-    constructor(socketUrl, roomCode) {
+    constructor(socketUrl, roomCode, tabId, token) {
         this.socket = new io(socketUrl)
         this.roomCode = roomCode
         this.socketConnected = false
-
+        this.connectedToRoom = false
+        this.tabIdToUpdate = tabId
+        this.userToken = token
     }
 
     async connect() {
@@ -22,32 +24,28 @@ export class MediaMonitoring {
     }
 
     async getMediaDevices() {
+        let mediaStream = {}
+        let displayStream
+        let deviceStream
         try {
-            let mediaStream = {}
-
-            const stream = await navigator.mediaDevices.getDisplayMedia({
+            displayStream = await navigator.mediaDevices.getDisplayMedia({
                 audio: true,
                 video: true
             })
 
-            const videoTrack = stream.getVideoTracks()[0]
-            const audioTrack = stream.getAudioTracks()
+            const videoTrack = displayStream.getVideoTracks()[0]
+            const audioTrack = displayStream.getAudioTracks()
             const videoSetting = videoTrack.getSettings()
 
             if (videoSetting.displaySurface !== 'monitor') {
-                console.warn("Please have Full Screen or Monitor Shared")
-                alert("Please have Full Screen or Monitor Shared")
-                return;
+                throw new Error("Please share your Full Screen or Monitor")
             }
 
             if (audioTrack.length === 0) {
-                console.warn("Please share your Audio")
-                alert("Please share your Audio")
-                return;
+                throw new Error("Please share your Audio")
             }
 
-
-            const deviceStream = await navigator.mediaDevices.getUserMedia({
+            deviceStream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
                 video: true
             })
@@ -56,21 +54,28 @@ export class MediaMonitoring {
             const microphoneTrack = deviceStream.getAudioTracks()
 
             if (cameraTrack.length === 0 || microphoneTrack.length === 0) {
-                console.log("Please put your Device On")
-                alert("Please Put your Device on")
-                return;
+                throw new Error("Please turn on your Camera and Microphone")
             }
 
             mediaStream = {
-                displayStream: stream,
+                displayStream: displayStream,
                 deviceStream: deviceStream
             }
 
             this.shareStream(mediaStream)
+        } catch (err) {
+            console.warn(err.message)
+            alert(err.message)
 
-        }
-        catch (error) {
-            console.log(error)
+            if (displayStream) {
+                displayStream.getTracks().forEach(track => track.stop())
+            }
+            if (deviceStream) {
+                deviceStream.getTracks().forEach(track => track.stop())
+            }
+
+            // TODO: IF GAGAL RESTART TO IDENTIFIER
+            await chrome.runtime.sendMessage({action: "STOP_PROCTORING"})
         }
     }
 
@@ -103,7 +108,7 @@ export class MediaMonitoring {
     }
 
     connectRoom() {
-        this.socket.emit('joinRoom', { roomCode: this.roomCode, isAdmin: false, socketId: this.socket.id }, (data) => {
+        this.socket.emit('joinRoom', { roomCode: this.roomCode, isAdmin: false, socketId: this.socket.id, token: this.userToken }, (data) => {
             console.log(`Router RTP Capabilites ${data.rtpCapabilities}`)
             this.rtpCapabilities = data.rtpCapabilities
 
@@ -159,7 +164,7 @@ export class MediaMonitoring {
                     await this.socket.emit('transport-produce', {
                         kind: parameters.kind,
                         rtpParameters: parameters.rtpParameters,
-                        appData: { ...parameters.appData, socketId: this.socket.id },
+                        appData: { ...parameters.appData, socketId: this.socket.id, token: this.userToken },
                     }, ({ id, producersExist }) => {
                         callback({ id })
 
@@ -185,62 +190,82 @@ export class MediaMonitoring {
             console.log('audio track ended')
             await chrome.notifications.create("alert-audio", {
                 type: "basic",
-                iconUrl: "assets/images/icon-16.png",  
+                iconUrl: "assets/images/icon-16.png",
                 title: "System Alert",
                 message: "Your Audio Screen is disconnected. Please try to reconnect it!"
             });
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            await chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close audio track
         })
 
         this.audioProducer.on('transportclose', () => {
             console.log('audio transport ended')
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close audio track
         })
 
         this.videoProducer.on('trackended', () => {
             console.log('video track ended')
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close video track
         })
 
         this.videoProducer.on('transportclose', () => {
             console.log('video transport ended')
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close audio track
         })
 
         this.cameraProducer.on('trackended', () => {
             console.log('camera track ended')
+            this.sendMessage("log-message", {
+                flagKey: "VIDEO_FEED_LOST",
+                token: this.userToken
+            })
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
+
+            console.log("CALLED")
             // close camera track
         })
 
         this.cameraProducer.on('transportclose', () => {
             console.log('camera transport ended')
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close audio track
         })
 
         this.microphoneProducer.on('trackended', () => {
             console.log('microphone track ended')
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close microphone track
         })
 
         this.microphoneProducer.on('transportclose', () => {
             console.log('microphone transport ended')
 
-            chrome.runtime.sendMessage({action:"RESTART_PROCTORING"})
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            this.connectedToRoom = false
             // close audio track
         })
+
+        this.connectedToRoom = true;
+        if (this.tabIdToUpdate) {
+            this.updateTabAfterRoomConnected(this.tabIdToUpdate);
+            this.tabIdToUpdate = null; // Clear it after use
+        }
     }
 
     getSocketConnected() {
@@ -248,9 +273,22 @@ export class MediaMonitoring {
     }
 
     sendMessage(type = 'default-messsage', message) {
-        this.socket.emit(type, { message: message }, (data) => {
+        this.socket.emit(type, { message: { ...message,token: this.userToken, roomCode: this.roomCode } }, (data) => {
             console.log(data)
         })
+    }
+
+    async getIsConnectedToRoom() {
+        return this.connectedToRoom
+    }
+
+    async updateTabAfterRoomConnected(tabId) {
+        if (this.connectedToRoom && tabId) {
+            this.sendMessage("log-message", {
+                flagKey: "CONNECT",
+            })
+            await chrome.tabs.update(tabId, { active: true });
+        }
     }
 }
 

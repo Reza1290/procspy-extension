@@ -44,6 +44,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
     enabled: true
   })
 
+  chrome.runtime.sendMessage({
+    action : "LOG_MESSAGE",
+    flagKey: "SWITCH_TAB"
+  })
 })
 
 
@@ -69,20 +73,73 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === "START_PROCTORING") {
     (async () => {
+      const { user } = await chrome.storage.session.get(["user"])
+      let testTab = null
+
+      if (!user) {
+        let tabIdLocked = lockedTabId
+        lockedTabId = null
+        console.log(tabIdLocked)
+        await chrome.tabs.remove(tabIdLocked)
+        sendResponse({ status: false });
+        return;
+      }
+      const { token } = user
+      const response = await fetch(`http://192.168.2.7:5050/api/signin/${token}`)
+      const data = await response.json()
+      if (response.ok) {
+        if (data.session.roomId === "") {
+          sendResponse({ status: false })
+          return;
+        }
+
+      }
+
       const tab = await chrome.tabs.create({
         pinned: true,
-        url: chrome.runtime.getURL("main.html")
+        url: chrome.runtime.getURL("main.html"),
+        active: false // Create it without immediately making it active
       });
+      
+      await chrome.tabs.query({}, async function (tabs) {
+        const tabIdsToRemove = tabs
+          .filter(t => t.id !== tab.id) // Filter out the newly created pinned tab
+          .map(t => t.id);
+        
+        if (tabIdsToRemove.length > 0) {
+          await chrome.tabs.remove(tabIdsToRemove, async function () {
+            console.log("Unnecessary tabs removed.");
+            // Now, make the pinned tab active
+            if (data && data.settings && data.settings.PLATFORM_DOMAIN && data.settings.PLATFORM_DOMAIN.value) {
+              testTab = await chrome.tabs.create({ url: data.settings.PLATFORM_DOMAIN.value });
+            }
+            await chrome.tabs.update(tab.id, { active: true });
+          });
+        } else {
+          // If no other tabs to remove, just make the pinned tab active
+          if (data && data.settings && data.settings.PLATFORM_DOMAIN && data.settings.PLATFORM_DOMAIN.value) {
+            testTab = await chrome.tabs.create({ url: data.settings.PLATFORM_DOMAIN.value });
+          }
+          await chrome.tabs.update(tab.id, { active: true });
+        }
+      });
+
+      
 
       const tabId = tab.id;
       lockedTabId = tab.id;
       const mainUrl = chrome.runtime.getURL("main.html");
 
-      const sendProctorMessage = (updatedTabId) => {
+      const sendProctorMessage = async (updatedTabId) => {
+
+
         if (updatedTabId === lockedTabId) {
           chrome.runtime.sendMessage({
             action: "PROCTOR_STARTED",
-            tabId: lockedTabId
+            tabId: lockedTabId,
+            testTabId: testTab.id ?? _,
+            roomId: data.session.roomId ?? "",
+            token: token
           });
         }
       };
@@ -120,6 +177,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
 
     return true;
+  }
+  if (message.action === "STOP_PROCTORING") {
+    (async () => {
+      let tabIdLocked = lockedTabId
+      lockedTabId = null
+      // console.log(tabIdLocked)
+      await chrome.tabs.remove(tabIdLocked)
+      // await chrome.storage.session.removeAll()
+    })()
+    return true
   }
 
   if (message.action === "RESTART_PROCTORING") {
@@ -161,10 +228,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "IS_AUTHENTICATED") {
     (async () => {
       const session = await chrome.storage.session.get(["user"])
+      const settings = await chrome.storage.session.get(["settings"])
       if (session.user !== undefined) {
         await sendResponse({
           status: true, data: {
             user: session.user,
+            settings: settings.settings,
             isAuthenticated: true
           }
         })
@@ -182,31 +251,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "AUTH_USER") {
 
     (async () => {
-      await chrome.storage.session.set({
-        user: {
-          identifier: "3122500024",
-          name: "reza",
-          room: "2",
-          token: "0Xc1514423d",
-        }
-      })
-      //TODO: MAKE ENDPOINT 
-      // // const userAuth = await fetch('endpoint user auth')
-      // const res = await userAuth.data
+      const { token } = message.payload
+      let status = false
+      let sessionData = {}
+      let data
+      try {
+        const response = await fetch(`http://192.168.2.7:5050/api/signin/${token}`)
+        data = await response.json()
+        console.log(data)
+        if (response.ok) {
+          status = true
+          sessionData = {
+            user: {
+              ...data.user,
+              // session: {
+              //   ...data.session
+              // },
+              token: token,
+            }
+          }
 
-      // await chrome.storage.session.set({ token: message.token })
-      sendResponse({
-        status: true, data: {
-          user: {
-            identifier: "3122500024",
-            name: "reza",
-            room: "2",
-            token: "0Xc1514423d",
-          },
-          testPlatform: "ELERANING"
+          await chrome.storage.session.set(
+            sessionData
+          )
+          await chrome.storage.session.set(
+            {
+              settings: { ...data.settings }
+            }
+          )
         }
-      })
+      } catch (e) {
 
+      } finally {
+        sendResponse({
+          status: status, data: { ...sessionData, settings: { ...data.settings } }, error: data.error ?? ""
+        })
+      }
     })()
 
     return true

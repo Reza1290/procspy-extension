@@ -32,7 +32,7 @@ const initApp = async () => {
   try {
     const proctorState = await sendMessageToWorker("PROCTOR_STATE")
     console.log(proctorState)
-    if(proctorState?.data.proctor_state != undefined && ["resume","pause"].includes(proctorState?.data.proctor_state)){
+    if (proctorState?.data.proctor_state != undefined && ["resume", "pause"].includes(proctorState?.data.proctor_state)) {
 
       await route("proctoring")
       await initProctoring()
@@ -81,16 +81,25 @@ const initTokenPage = async () => {
 
   // tokenInput.addEventListener('')
   const buttonTokenSubmit = document.getElementById('btn-token-submit')
-
+  const alertMessages = document.getElementById('alert-messages')
   buttonTokenSubmit.addEventListener('click', async () => {
     const response = await sendMessageToWorker("AUTH_USER", {
       token: tokenInput.value
     })
-
-    await route("identifier")
+    // console.log('rawr')
+    const data = response.data
+    console.log(data)
     if (response.status) {
+      console.log('true')
+      await route("identifier")
       await initIdentifier(response.data)
     } else {
+      alertMessages.classList.remove('hidden')
+      const paragraph = alertMessages.querySelector('p');
+      if (paragraph) {
+        
+        paragraph.textContent = data.error;
+      }
       // TODO ERROR MESSAGE
     }
   })
@@ -102,13 +111,17 @@ const initIdentifier = async (response) => {
   const idUserComponent = document.getElementById('id-user')
   const nameComponent = document.getElementById('name')
   const additionalInfoComponent = document.getElementById('additional-information')
+  console.log(response)
+  platformComponent.value = response.settings.PLATFORM_NAME.value ?? ""
 
-  platformComponent.value = response.testPlatform
   idUserComponent.value = response.user.identifier
   nameComponent.value = response.user.name
   // idUserComponent.value = response.user.
 
   const startProctoringButton = document.getElementById("start-proctoring")
+  const alertMessages = document.getElementById('alert-messages')
+  alertMessages.classList.add('hidden')
+
 
   startProctoringButton.addEventListener("click", async () => {
     const data = await sendMessageToWorker("START_PROCTORING")
@@ -116,6 +129,13 @@ const initIdentifier = async (response) => {
     if (data.status) {
       route("proctoring")
 
+    }else{
+      alertMessages.classList.remove('hidden')
+      const paragraph = alertMessages.querySelector('p');
+      if (paragraph) {
+        
+        paragraph.textContent = "Something Went Wrong :/"
+      }
     }
   })
 }
@@ -130,13 +150,13 @@ const initProctoring = async () => {
     const elem = document.getElementById("info-detail");
 
     if (elem.classList.contains("h-0") && elem.classList.contains("hidden")) {
-        elem.classList.remove("h-0", "hidden");
-        elem.classList.add("h-max", "block");
+      elem.classList.remove("h-0", "hidden");
+      elem.classList.add("h-max", "block");
     } else {
-        elem.classList.remove("h-max", "block");
-        elem.classList.add("h-0", "hidden");
+      elem.classList.remove("h-max", "block");
+      elem.classList.add("h-0", "hidden");
     }
-});
+  });
 
 }
 
@@ -187,13 +207,13 @@ document.addEventListener("click", function (event) {
     try {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const originalTabId = tabs[0].id;
-      
-        
+
+
         chrome.tabs.create({
           url: chrome.runtime.getURL("ask.html"),
           active: true
         });
-        
+
         // chrome.runtime.sendMessage({
         //   action: "REDIRECT_BACK",
         //   tabId: originalTabId
@@ -284,6 +304,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
 
       }
 
+
+    }
+
+    if (message.action === "STOP_PROCTORING"){
 
     }
   })

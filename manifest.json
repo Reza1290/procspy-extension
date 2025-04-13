@@ -34,8 +34,11 @@
   "host_permissions": [
     "http://*/",
     "https://*/*",
-    "<all_urls>"
+    "<all_urls>",
+    "https://localhost:5050/*"
+    
   ],
+  
   "permissions": [
     "sidePanel",
     "scripting",
@@ -49,8 +52,8 @@
     "notifications",
     "cookies",
     "storage",
-    "desktopCapture"
-    
+    "desktopCapture",
+    "https://localhost:5050/*"
 
   ],
   "icons": {

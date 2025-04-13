@@ -50177,10 +50177,13 @@ var _socket = require("socket.io-client");
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
 function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 class MediaMonitoring {
-  constructor(socketUrl, roomCode) {
+  constructor(socketUrl, roomCode, tabId, token) {
     this.socket = new _socket.io(socketUrl);
     this.roomCode = roomCode;
     this.socketConnected = false;
+    this.connectedToRoom = false;
+    this.tabIdToUpdate = tabId;
+    this.userToken = token;
   }
   async connect() {
     return new Promise(resolve => {
@@ -50194,43 +50197,51 @@ class MediaMonitoring {
     });
   }
   async getMediaDevices() {
+    let mediaStream = {};
+    let displayStream;
+    let deviceStream;
     try {
-      let mediaStream = {};
-      const stream = await navigator.mediaDevices.getDisplayMedia({
+      displayStream = await navigator.mediaDevices.getDisplayMedia({
         audio: true,
         video: true
       });
-      const videoTrack = stream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks();
+      const videoTrack = displayStream.getVideoTracks()[0];
+      const audioTrack = displayStream.getAudioTracks();
       const videoSetting = videoTrack.getSettings();
       if (videoSetting.displaySurface !== 'monitor') {
-        console.warn("Please have Full Screen or Monitor Shared");
-        alert("Please have Full Screen or Monitor Shared");
-        return;
+        throw new Error("Please share your Full Screen or Monitor");
       }
       if (audioTrack.length === 0) {
-        console.warn("Please share your Audio");
-        alert("Please share your Audio");
-        return;
+        throw new Error("Please share your Audio");
       }
-      const deviceStream = await navigator.mediaDevices.getUserMedia({
+      deviceStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true
       });
       const cameraTrack = deviceStream.getVideoTracks();
       const microphoneTrack = deviceStream.getAudioTracks();
       if (cameraTrack.length === 0 || microphoneTrack.length === 0) {
-        console.log("Please put your Device On");
-        alert("Please Put your Device on");
-        return;
+        throw new Error("Please turn on your Camera and Microphone");
       }
       mediaStream = {
-        displayStream: stream,
+        displayStream: displayStream,
         deviceStream: deviceStream
       };
       this.shareStream(mediaStream);
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.warn(err.message);
+      alert(err.message);
+      if (displayStream) {
+        displayStream.getTracks().forEach(track => track.stop());
+      }
+      if (deviceStream) {
+        deviceStream.getTracks().forEach(track => track.stop());
+      }
+
+      // TODO: IF GAGAL RESTART TO IDENTIFIER
+      await chrome.runtime.sendMessage({
+        action: "STOP_PROCTORING"
+      });
     }
   }
   shareStream(stream) {
@@ -50269,7 +50280,8 @@ class MediaMonitoring {
     this.socket.emit('joinRoom', {
       roomCode: this.roomCode,
       isAdmin: false,
-      socketId: this.socket.id
+      socketId: this.socket.id,
+      token: this.userToken
     }, data => {
       console.log(`Router RTP Capabilites ${data.rtpCapabilities}`);
       this.rtpCapabilities = data.rtpCapabilities;
@@ -50319,7 +50331,8 @@ class MediaMonitoring {
             rtpParameters: parameters.rtpParameters,
             appData: {
               ...parameters.appData,
-              socketId: this.socket.id
+              socketId: this.socket.id,
+              token: this.userToken
             }
           }, ({
             id,
@@ -50351,9 +50364,10 @@ class MediaMonitoring {
         title: "System Alert",
         message: "Your Audio Screen is disconnected. Please try to reconnect it!"
       });
-      chrome.runtime.sendMessage({
+      await chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close audio track
     });
     this.audioProducer.on('transportclose', () => {
@@ -50361,6 +50375,7 @@ class MediaMonitoring {
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close audio track
     });
     this.videoProducer.on('trackended', () => {
@@ -50368,6 +50383,7 @@ class MediaMonitoring {
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close video track
     });
     this.videoProducer.on('transportclose', () => {
@@ -50375,13 +50391,20 @@ class MediaMonitoring {
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close audio track
     });
     this.cameraProducer.on('trackended', () => {
       console.log('camera track ended');
+      this.sendMessage("log-message", {
+        flagKey: "VIDEO_FEED_LOST",
+        token: this.userToken
+      });
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
+      console.log("CALLED");
       // close camera track
     });
     this.cameraProducer.on('transportclose', () => {
@@ -50389,6 +50412,7 @@ class MediaMonitoring {
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close audio track
     });
     this.microphoneProducer.on('trackended', () => {
@@ -50396,6 +50420,7 @@ class MediaMonitoring {
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close microphone track
     });
     this.microphoneProducer.on('transportclose', () => {
@@ -50403,18 +50428,41 @@ class MediaMonitoring {
       chrome.runtime.sendMessage({
         action: "RESTART_PROCTORING"
       });
+      this.connectedToRoom = false;
       // close audio track
     });
+    this.connectedToRoom = true;
+    if (this.tabIdToUpdate) {
+      this.updateTabAfterRoomConnected(this.tabIdToUpdate);
+      this.tabIdToUpdate = null; // Clear it after use
+    }
   }
   getSocketConnected() {
     return this.socketConnected;
   }
   sendMessage(type = 'default-messsage', message) {
     this.socket.emit(type, {
-      message: message
+      message: {
+        ...message,
+        token: this.userToken,
+        roomCode: this.roomCode
+      }
     }, data => {
       console.log(data);
     });
+  }
+  async getIsConnectedToRoom() {
+    return this.connectedToRoom;
+  }
+  async updateTabAfterRoomConnected(tabId) {
+    if (this.connectedToRoom && tabId) {
+      this.sendMessage("log-message", {
+        flagKey: "CONNECT"
+      });
+      await chrome.tabs.update(tabId, {
+        active: true
+      });
+    }
   }
 }
 exports.MediaMonitoring = MediaMonitoring;
@@ -50431,19 +50479,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "PROCTOR_STARTED") {
     (async () => {
       console.log('hello');
-
+      // TODO: SIGNIN AGAIN
       // console.log(test.chromeVersion())
-
+      if (message.roomId === "") {
+        await chrome.storage.session.remove("user");
+        chrome.runtime.sendMessage({
+          action: "STOP_PROCTORING"
+        });
+        sendResponse({
+          status: false,
+          data: {}
+        });
+        return;
+      }
       if (typeof mediaMonitoring === "undefined") {
-        mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.5:3000/mediasoup", "2");
+        mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.7/mediasoup", message.roomId, message.testTabId, message.token);
         await mediaMonitoring.connect();
       } else {
         return;
       }
       if (mediaMonitoring.socketConnected) {
-        mediaMonitoring.getMediaDevices();
-        mediaMonitoring.sendMessage('log-message', 'connected-from-extension');
-        chrome.runtime.sendMessage({
+        await mediaMonitoring.getMediaDevices();
+        await chrome.runtime.sendMessage({
           action: "UPDATE_PROCTOR_STATE",
           data: {
             proctor_state: "resume"
@@ -50457,7 +50514,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return true;
   }
-
+  if (message.action === "LOG_MESSAGE") {
+    (async () => {
+      if (typeof mediaMonitoring != undefined) {
+        mediaMonitoring.sendMessage("log-message", {
+          flagKey: message.flagKey
+        });
+      }
+    })();
+    return true;
+  }
   // if (message.action === "MEDIA_DEVICES_VALIDATOR") {
 
   //     try {

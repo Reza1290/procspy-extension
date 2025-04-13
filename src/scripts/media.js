@@ -10,14 +10,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "PROCTOR_STARTED") {
         
         (async () => {
-
                 console.log('hello')
-
+                // TODO: SIGNIN AGAIN
                 // console.log(test.chromeVersion())
-
+                if(message.roomId === ""){
+                    await chrome.storage.session.remove("user")
+                    chrome.runtime.sendMessage({action: "STOP_PROCTORING"})
+                    sendResponse({status: false, data: {
+                        
+                    }})
+                    return
+                }
                 if (typeof mediaMonitoring === "undefined") {
                     mediaMonitoring = new MediaMonitoring(
-                        "https://192.168.2.7/mediasoup", "2"
+                        "https://192.168.2.7/mediasoup", message.roomId, message.testTabId, message.token
                     )
 
                     await mediaMonitoring.connect()
@@ -26,11 +32,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
 
                 if (mediaMonitoring.socketConnected) {
-                    mediaMonitoring.getMediaDevices()
-                    mediaMonitoring.sendMessage('log-message', 'connected-from-extension')
-                    chrome.runtime.sendMessage({action: "UPDATE_PROCTOR_STATE", data :{
+                    await mediaMonitoring.getMediaDevices()
+                    
+                    await chrome.runtime.sendMessage({action: "UPDATE_PROCTOR_STATE", data :{
                         proctor_state: "resume"
                     }})
+                    
                 }
                 sendResponse({status: true, data: {
                     
@@ -42,6 +49,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     }
 
+    if(message.action === "LOG_MESSAGE"){
+        (async() => {
+            if(typeof mediaMonitoring != undefined){
+                mediaMonitoring.sendMessage("log-message", {
+                    flagKey: message.flagKey,
+                })
+            }
+        })()
+
+        return true
+    }
     // if (message.action === "MEDIA_DEVICES_VALIDATOR") {
 
     //     try {
