@@ -15310,9 +15310,6 @@ function _parseVault(options) {
   // Parse decrypted .env string
   return DotenvModule.parse(decrypted);
 }
-function _log(message) {
-  console.log(`[dotenv@${version}][INFO] ${message}`);
-}
 function _warn(message) {
   console.log(`[dotenv@${version}][WARN] ${message}`);
 }
@@ -15400,7 +15397,10 @@ function _resolveHome(envPath) {
   return envPath[0] === '~' ? path.join(os.homedir(), envPath.slice(1)) : envPath;
 }
 function _configVault(options) {
-  _log('Loading env from encrypted .env.vault');
+  const debug = Boolean(options && options.debug);
+  if (debug) {
+    _debug('Loading env from encrypted .env.vault');
+  }
   const parsed = DotenvModule._parseVault(options);
   let processEnv = process.env;
   if (options && options.processEnv != null) {
@@ -15562,7 +15562,7 @@ module.exports = DotenvModule;
 },{"../package.json":75,"_process":192,"buffer":51,"crypto":60,"fs":22,"os":178,"path":184}],75:[function(require,module,exports){
 module.exports={
   "name": "dotenv",
-  "version": "16.4.7",
+  "version": "16.5.0",
   "description": "Loads environment variables from .env file",
   "main": "lib/main.js",
   "types": "lib/main.d.ts",
@@ -15593,6 +15593,7 @@ module.exports={
     "type": "git",
     "url": "git://github.com/motdotla/dotenv.git"
   },
+  "homepage": "https://github.com/motdotla/dotenv#readme",
   "funding": "https://dotenvx.com",
   "keywords": [
     "dotenv",
@@ -50434,8 +50435,23 @@ class MediaMonitoring {
     this.connectedToRoom = true;
     if (this.tabIdToUpdate) {
       this.updateTabAfterRoomConnected(this.tabIdToUpdate);
-      this.tabIdToUpdate = null; // Clear it after use
+      this.tabIdToUpdate = null;
     }
+    this.startRTTMonitoring();
+  }
+  startRTTMonitoring() {
+    const pc = this.producerTransport._handler._pc;
+    console.log("start_monitoring_rTT");
+    this.rttInterval = setInterval(async () => {
+      const stats = await pc.getStats();
+      for (const report of stats.values()) {
+        if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.currentRoundTripTime) {
+          const rtt = report.currentRoundTripTime * 1000;
+          console.log(`Media RTT: ${rtt.toFixed(1)} ms`);
+          break;
+        }
+      }
+    }, 5000);
   }
   getSocketConnected() {
     return this.socketConnected;
@@ -50493,7 +50509,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       if (typeof mediaMonitoring === "undefined") {
-        mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.7/mediasoup", message.roomId, message.testTabId, message.token);
+        mediaMonitoring = new _MediaMonitoring.MediaMonitoring("https://192.168.2.5/mediasoup", message.roomId, message.testTabId, message.token);
         await mediaMonitoring.connect();
       } else {
         return;
@@ -50560,6 +50576,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // if (message.action === "get_title") {
   //     sendResponse({ title: document.title });
   // }
+  return true;
 });
 
 },{"../modules/MediaMonitoring.js":257,"dotenv":74}]},{},[258]);

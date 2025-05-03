@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 // TODO: SIGNIN AGAIN
                 // console.log(test.chromeVersion())
                 if(message.roomId === ""){
-                    await chrome.storage.session.remove("user")
+                    await chrome.storage.session.remove(["user"])
                     chrome.runtime.sendMessage({action: "STOP_PROCTORING"})
                     sendResponse({status: false, data: {
                         
@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
                 if (typeof mediaMonitoring === "undefined") {
                     mediaMonitoring = new MediaMonitoring(
-                        "https://192.168.2.7/mediasoup", message.roomId, message.testTabId, message.token
+                        "https://192.168.2.5/mediasoup", message.roomId, message.testTabId, message.token
                     )
 
                     await mediaMonitoring.connect()
@@ -96,5 +96,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // if (message.action === "get_title") {
     //     sendResponse({ title: document.title });
     // }
+    return true
 });
 
