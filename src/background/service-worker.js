@@ -44,15 +44,17 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 
   if (changeInfo.status === 'complete' && tabId !== state.testPageTab?.id && tabId != state.webRtcShareScreenTab?.id) {
-    (async () => {
-      const response = await sendServerLogMessage("SWITCH_TAB", {
-        title: tab.title,
-        url: tab.url
-      })
-    })()
-    return true
+
+    sendServerLogMessage("SWITCH_TAB", {
+      title: tab.title,
+      url: tab.url
+    })
   }
+
+  
 })
+
+
 
 loadState()
 console.log('load')
@@ -219,6 +221,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "START_PROCTORING") {
     (async () => {
       try {
+        chrome.windows.create({ state: 'fullscreen' })
         const data = await signIn()
 
         if (!data || !data?.session.roomId) {
