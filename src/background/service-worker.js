@@ -43,43 +43,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     chrome.tabs.update(tabId, { url: `index.html` })
   }
 
-  // if (changeInfo.status === 'complete' && tab.url === 'https://procspy.link/') {
-  //   console.log("rawr");
-
-  //   chrome.desktopCapture.chooseDesktopMedia(["screen"], (streamId) => {
-  //     console.log("Stream ID:", streamId);
-
-  //     if (streamId) {
-  //       chrome.tabs.create({ url: "https://test.com" }, (newTab) => {
-  //         console.log("Created tab:", newTab);
-
-  //         // If needed, inject a script after tab is created
-  //         // chrome.scripting.executeScript({
-  //         //   target: { tabId: newTab.id },
-  //         //   files: ["src/scripts/keystroke.js"],
-  //         // }).then(() => console.log("Script injected"));
-  //       });
-  //     } else {
-  //       console.error("Screen capture denied or failed.");
-  //     }
-  //   });
-  // }
-
-  // console.log(changeInfo)
-  // console.log("NOT TIMEOUT RAWR") 
-  // console.log(tab?.url)
-
-  // if(changeInfo.status === 'complete'){
-  //   (async()=>{
-  //     const response = await sendServerLogMessage("SWITCH_TAB",{
-  //       // image: "https://media.istockphoto.com/id/944512054/id/foto/tv-4k-lcd-layar-datar-atau-oled-ilustrasi-realistis-plasma-mockup-monitor-hd-kosong-putih.jpg?s=612x612&w=0&k=20&c=xMZHxO3jZv1ygwtgRJse6-ot9oLc8XL_9k0PrGmHAUg=",
-  //       title: tab.title,
-  //       url: tab.url
-  //     })
-  //     console.log("SWITCH TAB")
-  //   })()
-  //   return true
-  // }
+  if (changeInfo.status === 'complete' && tabId !== state.testPageTab?.id && tabId != state.webRtcShareScreenTab?.id) {
+    (async () => {
+      const response = await sendServerLogMessage("SWITCH_TAB", {
+        title: tab.title,
+        url: tab.url
+      })
+    })()
+    return true
+  }
 })
 
 loadState()
@@ -296,13 +268,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "STOP_PROCTORING") {
     (async () => {
-      
+
 
       let tabIdWebRtcShareScreenTab = state.webRtcShareScreenTab?.id
       let tabIdTestPage = state.testPageTab?.id
       state.isWebRtcTabWatcherInitialized = false
 
-      
+
 
       // boundOnTabUpdated = null
       // boundOnTabRemoved = null
@@ -310,8 +282,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // chrome.tabs.onUpdated.removeListener()
       state.webRtcShareScreenTab = null
       state.testPageTab = null
-      
-      console.log('local_state',state)
+
       try {
         await chrome.tabs.onRemoved.removeListener(boundOnTabRemoved)
         await chrome.tabs.onUpdated.removeListener(boundOnTabUpdated)
@@ -337,7 +308,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
           }
           await chrome.storage.session.remove(["proctor_session", "auth", "settings", "isProctorMessageSent", "isWebRtcTabWatcherInitialized", "testPageTab", "webRtcShareScreenTab"])
-          
+
           sendResponse({ ok: true })
         } else {
           await chrome.tabs.create({
