@@ -43,15 +43,11 @@ export default async function page({ user }) {
                 </tr>
                 <tr>
                     <td class="p-1 pt-2 font-semibold w-1/3">IP Address</td>
-                    <td class="p-1 pt-2">192.168.0.2</td>
+                    <td class="p-1 pt-2" id="public-ip">192.168.0.2</td>
                 </tr>
                 <tr>
                     <td class="p-1 font-semibold w-1/3">Average Ping</td>
                     <td class="p-1" id="ping">Loading</td>
-                </tr>
-                <tr>
-                    <td class="p-1 font-semibold w-1/3">Last Ping</td>
-                    <td class="p-1" id="last-ping">20ms</td>
                 </tr>
                 
 
@@ -104,6 +100,7 @@ export async function setup() {
         infoDetailPanel.classList.toggle('h-0');
 
         const pingElement = document.getElementById('ping');
+        const publicIpElement = document.getElementById('public-ip')
 
         if (!isHidden && rttInterval === null) {
             rttInterval = setInterval(async () => {
@@ -114,7 +111,9 @@ export async function setup() {
                 });
 
                 if (response.ok) {
+                    console.log(response)
                     pingElement.textContent = response.data.ping + " ms";
+                    publicIpElement.textContent = response.data.ip
                     if(lastPings.length > 20){
                         lastPings.shift()
                     }
@@ -122,12 +121,14 @@ export async function setup() {
                     drawPing(lastPings)
                 } else {
                     pingElement.textContent = "Failed";
+                    publicIpElement.textContent = "-"
                 }
             }, 4000);
         } else if (isHidden && rttInterval !== null) {
             clearInterval(rttInterval);
             rttInterval = null;
             pingElement.textContent = "-";
+            publicIpElement.textContent = "-"
         }
     });
 

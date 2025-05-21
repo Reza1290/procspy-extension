@@ -142,9 +142,9 @@ const blobToBase64 = async (imageBlob) => {
 const getRttSocket = async () => {
     if (!socketHandler) throw new Error("Socket Not Connected!")
     try {
-        const rtt = await socketHandler.getRTT()
+        const {ip, rtt} = await socketHandler.getRTT()
         console.log(rtt)
-        return { ok: true, data: { ping: rtt } }
+        return { ok: true, data: { ip,  ping: rtt } }
     } catch (e) {
         throw e
     }

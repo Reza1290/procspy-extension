@@ -51,10 +51,9 @@ export class SocketHandler {
     getRTT() {
         return new Promise((resolve) => {
             const start = Date.now();
-            this.socket.emit("EXTENSION_PING", () => {
+            this.socket.emit("EXTENSION_PING", ({ip}) => {
                 const rtt = Date.now() - start;
-                console.log(rtt)
-                resolve(rtt);
+                resolve({ip: ip.split("::ffff:")[1], rtt});
             });
         });
     }
