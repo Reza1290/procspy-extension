@@ -1,3 +1,4 @@
+import { DeviceInfo } from '../modules/DeviceInfo.js';
 let state = {
   isWebRtcTabWatcherInitialized: false,
   isProctorMessageSent: false,
@@ -5,6 +6,8 @@ let state = {
   testPageTab: null,
   proctoringMode: false,
 }
+
+let deviceInfo = new DeviceInfo()
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
@@ -53,6 +56,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 
   if (changeInfo.status === 'complete' && !tab.url?.startsWith("chrome://")) {
+
     chrome.scripting
       .executeScript({
         target: { tabId: tabId },
@@ -60,11 +64,25 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       })
       .then(() => console.log("script injected in all frames"));
   }
+
 })
+
+chrome.windows.onBoundsChanged.addListener((event) => {
+
+  if (event.state != 'minimized' && state.proctoringMode) {
+    sendServerLogMessage("MINIMIZE_WINDOW", {
+      width: event.width
+    })
+  }
+
+
+})
+
 
 
 loadState()
 console.log('load')
+
 
 
 const onTabRemoved = () => async (closedTabId) => {
