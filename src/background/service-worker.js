@@ -11,6 +11,9 @@ chrome.runtime.onInstalled.addListener((details) => {
       url: chrome.runtime.getURL("page/ask.html")
     })
   }
+
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+
 })
 
 const sendServerLogMessage = (flagKey, attachment = "") => {
@@ -39,24 +42,45 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   ) {
     chrome.tabs.update(tabId, { url: `index.html` })
   }
+
+  // if (changeInfo.status === 'complete' && tab.url === 'https://procspy.link/') {
+  //   console.log("rawr");
+
+  //   chrome.desktopCapture.chooseDesktopMedia(["screen"], (streamId) => {
+  //     console.log("Stream ID:", streamId);
+
+  //     if (streamId) {
+  //       chrome.tabs.create({ url: "https://test.com" }, (newTab) => {
+  //         console.log("Created tab:", newTab);
+
+  //         // If needed, inject a script after tab is created
+  //         // chrome.scripting.executeScript({
+  //         //   target: { tabId: newTab.id },
+  //         //   files: ["src/scripts/keystroke.js"],
+  //         // }).then(() => console.log("Script injected"));
+  //       });
+  //     } else {
+  //       console.error("Screen capture denied or failed.");
+  //     }
+  //   });
+  // }
+
   // console.log(changeInfo)
   // console.log("NOT TIMEOUT RAWR") 
+  // console.log(tab?.url)
 
-  
-  if(changeInfo.status === 'complete'){
-    (async()=>{
-      const response = await sendServerLogMessage("SWITCH_TAB",{
-        // image: "https://media.istockphoto.com/id/944512054/id/foto/tv-4k-lcd-layar-datar-atau-oled-ilustrasi-realistis-plasma-mockup-monitor-hd-kosong-putih.jpg?s=612x612&w=0&k=20&c=xMZHxO3jZv1ygwtgRJse6-ot9oLc8XL_9k0PrGmHAUg=",
-        title: tab.title,
-        url: tab.url
-      })
-      console.log("SWITCH TAB")
-      return true
-    })()
-  }
+  // if(changeInfo.status === 'complete'){
+  //   (async()=>{
+  //     const response = await sendServerLogMessage("SWITCH_TAB",{
+  //       // image: "https://media.istockphoto.com/id/944512054/id/foto/tv-4k-lcd-layar-datar-atau-oled-ilustrasi-realistis-plasma-mockup-monitor-hd-kosong-putih.jpg?s=612x612&w=0&k=20&c=xMZHxO3jZv1ygwtgRJse6-ot9oLc8XL_9k0PrGmHAUg=",
+  //       title: tab.title,
+  //       url: tab.url
+  //     })
+  //     console.log("SWITCH TAB")
+  //   })()
+  //   return true
+  // }
 })
-
-
 
 loadState()
 console.log('load')
@@ -90,20 +114,20 @@ const onTabUpdated = () => async (updatedTabId, changeInfo, tab) => {
       state.isProctorMessageSent = true;
       saveState()
 
-      
-      // setTimeout(async () => {
-        await chrome.tabs.update(state.webRtcShareScreenTab.id, { active: true })
-        const data = await signIn();
-        await sendProctorMessage(data.session?.roomId, data.session?.token)
-          .catch(console.error)
-          .finally(() => {
-            state.isProctorMessageSent = false;
-            saveState();
-          });
 
-        if (state.testPageTab?.id) {
-          await chrome.tabs.update(state.testPageTab.id, { active: true });
-        }
+      // setTimeout(async () => {
+      await chrome.tabs.update(state.webRtcShareScreenTab.id, { active: true })
+      const data = await signIn();
+      await sendProctorMessage(data.session?.roomId, data.session?.token)
+        .catch(console.error)
+        .finally(() => {
+          state.isProctorMessageSent = false;
+          saveState();
+        });
+
+      if (state.testPageTab?.id) {
+        await chrome.tabs.update(state.testPageTab.id, { active: true });
+      }
       // }, 1000);
 
 
@@ -210,7 +234,7 @@ function initWebRtcTabWatcher() {
   state.isWebRtcTabWatcherInitialized = true;
   saveState()
   console.log("ADD LISTENER")
-
+  console.log("boundOnTabUpdated", boundOnTabUpdated)
   chrome.tabs.onRemoved.addListener(boundOnTabRemoved);
   chrome.tabs.onUpdated.addListener(boundOnTabUpdated);
 }
@@ -223,7 +247,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "START_PROCTORING") {
     (async () => {
       try {
-        loadState()
         const data = await signIn()
 
         if (!data || !data?.session.roomId) {
@@ -273,23 +296,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "STOP_PROCTORING") {
     (async () => {
-      loadState()
+      
 
       let tabIdWebRtcShareScreenTab = state.webRtcShareScreenTab?.id
       let tabIdTestPage = state.testPageTab?.id
       state.isWebRtcTabWatcherInitialized = false
 
-      chrome.tabs.onRemoved.removeListener(boundOnTabRemoved)
-      chrome.tabs.onUpdated.removeListener(boundOnTabUpdated)
+      
 
-      boundOnTabUpdated = null
-      boundOnTabRemoved = null
+      // boundOnTabUpdated = null
+      // boundOnTabRemoved = null
 
       // chrome.tabs.onUpdated.removeListener()
       state.webRtcShareScreenTab = null
       state.testPageTab = null
-      saveState()
+      
+      console.log('local_state',state)
       try {
+        await chrome.tabs.onRemoved.removeListener(boundOnTabRemoved)
+        await chrome.tabs.onUpdated.removeListener(boundOnTabUpdated)
+
         const response = await chrome.runtime.sendMessage({
           action: "PROCTOR_STOPPED",
         })
@@ -311,6 +337,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
           }
           await chrome.storage.session.remove(["proctor_session", "auth", "settings", "isProctorMessageSent", "isWebRtcTabWatcherInitialized", "testPageTab", "webRtcShareScreenTab"])
+          
           sendResponse({ ok: true })
         } else {
           await chrome.tabs.create({
@@ -323,7 +350,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.error(e)
         sendResponse({ ok: false, error: e })
       }
-
+      saveState()
     })()
     return true
   }
