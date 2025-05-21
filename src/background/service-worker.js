@@ -2,7 +2,8 @@ let state = {
   isWebRtcTabWatcherInitialized: false,
   isProctorMessageSent: false,
   webRtcShareScreenTab: null,
-  testPageTab: null
+  testPageTab: null,
+  proctoringMode: false,
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -43,12 +44,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     chrome.tabs.update(tabId, { url: `index.html` })
   }
 
-  if (changeInfo.status === 'complete' && tabId !== state.testPageTab?.id && tabId != state.webRtcShareScreenTab?.id) {
-
+  if (changeInfo.status === 'complete' && tabId !== state.testPageTab?.id && tabId != state.webRtcShareScreenTab?.id && state.proctoringMode != false) {
+    console.log('wow  ', state)
     sendServerLogMessage("SWITCH_TAB", {
       title: tab.title,
-      url: tab.url
-    })
+      url: tab.url,
+    });
   }
 
   if (changeInfo.status === 'complete') {
@@ -62,12 +63,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 })
 
 
-
 loadState()
 console.log('load')
-
-// let isWebRtcTabWatcherInitialized = false;
-// let state.isProctorMessageSent = false;
 
 
 const onTabRemoved = () => async (closedTabId) => {
@@ -78,9 +75,10 @@ const onTabRemoved = () => async (closedTabId) => {
     chrome.tabs.onUpdated.removeListener(boundOnTabUpdated)
     state.isWebRtcTabWatcherInitialized = false;
     saveState()
-
-    await recreateWebRtcTab();
-    initWebRtcTabWatcher();
+    if (state.proctoringMode) {
+      await recreateWebRtcTab();
+      initWebRtcTabWatcher();
+    }
   }
 };
 
@@ -106,8 +104,15 @@ const onTabUpdated = () => async (updatedTabId, changeInfo, tab) => {
           saveState();
         });
 
-      if (state.testPageTab?.id) {
-        await chrome.tabs.update(state.testPageTab.id, { active: true });
+      if (state.testPageTab) {
+        try {
+          await chrome.tabs.update(state.testPageTab.id, {
+            active: true
+          })
+        } catch (e) {
+          state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value })
+          saveState()
+        }
       }
       // }, 1000);
 
@@ -197,9 +202,14 @@ async function recreateWebRtcTab() {
     const res = await sendProctorMessage(data.session.roomId, data.session.token);
 
     if (state.testPageTab) {
-      await chrome.tabs.update(state.testPageTab.id, {
-        active: true
-      })
+      try {
+        await chrome.tabs.update(state.testPageTab.id, {
+          active: true
+        })
+      } catch (e) {
+        state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value })
+        saveState()
+      }
     }
 
 
@@ -228,7 +238,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "START_PROCTORING") {
     (async () => {
       try {
-        chrome.windows.create({ state: 'fullscreen' })
+        // chrome.windows.create({state: 'fullscreen'})
         const data = await signIn()
 
         if (!data || !data?.session.roomId) {
@@ -257,6 +267,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await waitForTabToLoad(state.webRtcShareScreenTab.id);
 
         initWebRtcTabWatcher()
+        state.proctoringMode = true;
+
 
         const res = await sendProctorMessage(data.session.roomId, data.session.token);
         console.log("Proctor message response:", res);
@@ -317,7 +329,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             } catch (e) {
             }
           }
-          await chrome.storage.session.remove(["proctor_session", "auth", "settings", "isProctorMessageSent", "isWebRtcTabWatcherInitialized", "testPageTab", "webRtcShareScreenTab"])
+          await chrome.storage.session.remove(["proctor_session", "auth", "settings", "isProctorMessageSent", "isWebRtcTabWatcherInitialized", "testPageTab", "webRtcShareScreenTab", "proctoringMode"])
 
           sendResponse({ ok: true })
         } else {
@@ -326,7 +338,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           })
           sendResponse({ ok: false, error: response.error })
         }
-
+        state.proctoringMode = false
       } catch (e) {
         console.error(e)
         sendResponse({ ok: false, error: e })
@@ -351,7 +363,9 @@ function loadState() {
     if (data) {
       state = { ...state, ...data };
       console.log("State loaded:", state);
-      initWebRtcTabWatcher()
+      if (state.proctoringMode) {
+        initWebRtcTabWatcher()
+      }
     }
   });
 }
