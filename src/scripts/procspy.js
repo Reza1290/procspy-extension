@@ -108,18 +108,16 @@ const sendMessageToSocket = async (action, payload) => {
     try {
         if (payload.attachment) {
             const imageBlob = await webRtcHandler.captureScreen();
-            console.log("1 test")
+            
             const base64 = await blobToBase64(imageBlob)
-            console.log("2 test")
+            
 
             payload.attachment.file = base64;
 
         }
-        console.table(payload)
 
         await messageHandler.sendMessageToSocket(action, payload);
 
-        console.log("HI IM HERE")
     } catch (e) {
         throw e
     }
@@ -227,7 +225,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "GPU_INFO") {
-        console.log("GPU_INFO")
         getGpuInfo()
             .then((response)=>sendResponse(response))
             .catch((error)=>sendResponse({ok:false, error: error.message}))
@@ -235,7 +232,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "UPDATE_DEVICE_INFO"){
-        sendMessageToSocket("UPDATE_DEVICE_INFO", message.deviceInfo)
+        console.log("UPDATE!", message.deviceInfo)
+        sendMessageToSocket("UPDATE_DEVICE_INFO", {deviceInfo: message.deviceInfo}).then(() => sendResponse({ ok: true }))
+            .catch((err) => sendResponse({ ok: false, error: err.message }))
+        return true
     }
 
     return true

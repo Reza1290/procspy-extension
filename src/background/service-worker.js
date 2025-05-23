@@ -67,9 +67,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       .then(() => console.log("script injected in all frames"));
   }
 
-  if (changeInfo.status === 'complete' && state.proctoringMode && state.webRtcShareScreenTab != null) {
-    updateDeviceInfo()
-  }
+  // if (changeInfo.status === 'complete' && state.proctoringMode && state.webRtcShareScreenTab != null) {
+  //   updateDeviceInfo()
+  // }
 
   return true
 })
@@ -86,10 +86,10 @@ chrome.windows.onBoundsChanged.addListener((event) => {
 })
 
 chrome.system.display.onDisplayChanged.addListener(() => {
-  
+
   deviceInfo.getAllInfo().then((e) => {
-    if(e.multipleMonitor){
-      sendServerLogMessage("MULTIPLE_MONITORS", {displays: e.display})
+    if (e.displays > 1) {
+      sendServerLogMessage("MULTIPLE_MONITORS", { displays: e.displays })
     }
   })
 })
@@ -99,7 +99,18 @@ chrome.system.display.onDisplayChanged.addListener(() => {
 const updateDeviceInfo = async () => {
   const res = await deviceInfo.getAllInfo()
   console.log(res)
-  chrome.runtime.sendMessage({ action: "UPDATE_DEVICE_INFO", res })
+  sendDeviceUpdateMessage(res)
+}
+
+const sendDeviceUpdateMessage = (deviceInfo) => {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ action: "UPDATE_DEVICE_INFO", deviceInfo }, (response) => {
+      if (chrome.runtime.lastError) {
+        return reject(chrome.runtime.lastError)
+      }
+      resolve(response)
+    })
+  })
 }
 
 const onTabRemoved = () => async (closedTabId) => {
@@ -310,6 +321,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         if (res.ok && data?.settings?.PLATFORM_DOMAIN?.value) {
           state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value });
+          await updateDeviceInfo()
         }
 
         sendResponse(res);

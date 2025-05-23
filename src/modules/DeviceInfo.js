@@ -13,6 +13,7 @@ export class DeviceInfo {
             storages: [],
             displays: [],
             primaryDisplay: '',
+            deviceId: '',
             isVM: false
         };
     }
@@ -25,7 +26,11 @@ export class DeviceInfo {
     }
 
     getDeviceId() {
-        
+        chrome.instanceID.getID(
+            (e) => {
+                this.deviceInfo.deviceId = e
+            }
+        )
     }
 
     async getGPUInfo() {
@@ -120,16 +125,17 @@ export class DeviceInfo {
         });
     }
 
-    
+
     async getAllInfo() {
         this.getBrowserInfo();
+        this.getDeviceId()
 
         await Promise.all([
             this.getCPUInfo(),
             this.getGPUInfo(),
             this.getMemoryInfo(),
             this.getDisplayInfo(),
-            this.getStorageInfo()
+            this.getStorageInfo(),
         ]);
 
         return this.deviceInfo;

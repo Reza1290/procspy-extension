@@ -32,9 +32,12 @@ export class SocketHandler {
     }
 
     async disconnectFromSocket() {
-        if (this._isConnected) {
-            this.socket.disconnect()
-        }
+        this.socket.emit("sessionEnd")
+        setTimeout(()=>{
+            if (this._isConnected) {
+                this.socket.disconnect()
+            }
+        },2000)
     }
 
     recreateSocket() {
