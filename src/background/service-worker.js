@@ -7,6 +7,8 @@ let state = {
   proctoringMode: false,
 }
 
+loadState()
+
 let deviceInfo = new DeviceInfo()
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -65,6 +67,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       .then(() => console.log("script injected in all frames"));
   }
 
+  if (changeInfo.status === 'complete' && state.proctoringMode && state.webRtcShareScreenTab != null) {
+    updateDeviceInfo()
+  }
+
+  return true
 })
 
 chrome.windows.onBoundsChanged.addListener((event) => {
@@ -78,12 +85,22 @@ chrome.windows.onBoundsChanged.addListener((event) => {
 
 })
 
+chrome.system.display.onDisplayChanged.addListener(() => {
+  
+  deviceInfo.getAllInfo().then((e) => {
+    if(e.multipleMonitor){
+      sendServerLogMessage("MULTIPLE_MONITORS", {displays: e.display})
+    }
+  })
+})
 
 
-loadState()
-console.log('load')
 
-
+const updateDeviceInfo = async () => {
+  const res = await deviceInfo.getAllInfo()
+  console.log(res)
+  chrome.runtime.sendMessage({ action: "UPDATE_DEVICE_INFO", res })
+}
 
 const onTabRemoved = () => async (closedTabId) => {
   if (state.webRtcShareScreenTab && closedTabId === state.webRtcShareScreenTab.id) {

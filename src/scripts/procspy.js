@@ -113,7 +113,7 @@ const sendMessageToSocket = async (action, payload) => {
             console.log("2 test")
 
             payload.attachment.file = base64;
-            
+
         }
         console.table(payload)
 
@@ -142,14 +142,39 @@ const blobToBase64 = async (imageBlob) => {
 const getRttSocket = async () => {
     if (!socketHandler) throw new Error("Socket Not Connected!")
     try {
-        const {ip, rtt} = await socketHandler.getRTT()
+        const { ip, rtt } = await socketHandler.getRTT()
         console.log(rtt)
-        return { ok: true, data: { ip,  ping: rtt } }
+        return { ok: true, data: { ip, ping: rtt } }
     } catch (e) {
         throw e
     }
 }
+
+const getGpuInfo = async () => {
+
+    try{
+        console.log("GPU ENAK")
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        let vendor = 'Unknown';
+        let renderer = 'Unknown';
+        
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            }
+        }
+        return {vendor, renderer}
+    }catch(e){
+        throw e
+    }
+    
+}
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log(message)
     if (message.action === 'PROCTOR_STARTED') {
         const { roomId, token } = message
 
@@ -199,6 +224,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             .catch((error) => sendResponse({ ok: false, error: error.message }))
 
         return true
+    }
+
+    if (message.action === "GPU_INFO") {
+        console.log("GPU_INFO")
+        getGpuInfo()
+            .then((response)=>sendResponse(response))
+            .catch((error)=>sendResponse({ok:false, error: error.message}))
+        return true
+    }
+
+    if (message.action === "UPDATE_DEVICE_INFO"){
+        sendMessageToSocket("UPDATE_DEVICE_INFO", message.deviceInfo)
     }
 
     return true
