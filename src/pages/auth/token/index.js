@@ -49,7 +49,7 @@ export function setup() {
         }
         const data = await authSignIn(token)
         console.log(data)
-        if(data.user) {
+        if(data.user && data.session?.status !== "completed") {
             await chrome.storage.session.set({
                 auth: {
                     identifier: data?.user?.identifier,
@@ -64,10 +64,11 @@ export function setup() {
             })
             navigateTo('home', data)
         } else {
+           
             alertMessages.classList.remove('hidden')
             const paragraph = alertMessages.querySelector('p');
             if (paragraph) {
-                paragraph.textContent = data.error;
+                paragraph.textContent = data.session?.status ? "Session Ended" : data.error;
             }
         }
     })
