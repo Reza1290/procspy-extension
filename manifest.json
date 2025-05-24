@@ -38,7 +38,8 @@
     "http://*/",
     "https://*/*",
     "https://192.168.2.5:5050/",
-    "<all_urls>"
+    "<all_urls>",
+    "chrome-extension://"
     
   ],
   

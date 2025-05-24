@@ -69,9 +69,9 @@ const createConnection = async (roomId, authToken) => {
         }
 
 
-        if (webRtcHandler && !socketHandler._isConnected) {
-            await socketHandler.connectToSocket()
-        }
+        // if (webRtcHandler && !socketHandler._isConnected) {
+        //     await socketHandler.connectToSocket()
+        // }
 
         if (webRtcHandler) {
             await webRtcHandler.getMediaDevices()
@@ -174,6 +174,7 @@ const getGpuInfo = async () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log(message)
     if (message.action === 'PROCTOR_STARTED') {
+        console.log("HELLO AKU INIT", new Date())
         const { roomId, token } = message
 
         createConnection(roomId, token)

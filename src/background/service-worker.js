@@ -55,6 +55,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       title: tab.title,
       url: tab.url,
     });
+
+    return true
   }
 
   if (changeInfo.status === 'complete' && !tab.url?.startsWith("chrome://")) {
@@ -80,9 +82,10 @@ chrome.windows.onBoundsChanged.addListener((event) => {
     sendServerLogMessage("MINIMIZE_WINDOW", {
       width: event.width
     })
+    return true
   }
 
-
+  return true
 })
 
 chrome.system.display.onDisplayChanged.addListener(() => {
@@ -91,10 +94,17 @@ chrome.system.display.onDisplayChanged.addListener(() => {
     if (e.displays > 1) {
       sendServerLogMessage("MULTIPLE_MONITORS", { displays: e.displays })
     }
+    return true
   })
+  return true
 })
 
-
+chrome.windows.onFocusChanged.addListener((event) => {
+  if(event < 0){
+    sendServerLogMessage("WINDOW_OFF", { id: event })
+  }
+  return true
+})
 
 const updateDeviceInfo = async () => {
   const res = await deviceInfo.getAllInfo()
