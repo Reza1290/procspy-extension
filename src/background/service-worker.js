@@ -59,7 +59,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     return true
   }
 
-  if (changeInfo.status === 'complete' && !tab.url?.startsWith("chrome://")) {
+  if (changeInfo.status === 'complete' && !tab.url?.startsWith("chrome://") && !tab.url?.startsWith("chrome-extension://")) {
 
     chrome.scripting
       .executeScript({

