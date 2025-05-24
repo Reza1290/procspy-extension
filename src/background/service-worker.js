@@ -5,6 +5,7 @@ let state = {
   webRtcShareScreenTab: null,
   testPageTab: null,
   proctoringMode: false,
+  focusMode: 0
 }
 
 loadState()
@@ -72,13 +73,18 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   // if (changeInfo.status === 'complete' && state.proctoringMode && state.webRtcShareScreenTab != null) {
   //   updateDeviceInfo()
   // }
+  // if(changeInfo.status === "complete" && tabId == state.testPageTab?.id && state.proctoringMode){
+  //   console.log("FOCUS MODE LUR")
+  //   state.focusMode = true
+  //   saveState()
+  // }
 
   return true
 })
 
 chrome.windows.onBoundsChanged.addListener((event) => {
 
-  if (event.state != 'minimized' && state.proctoringMode) {
+  if (event.state != 'minimized' && state.proctoringMode && state.testPageTab != null) {
     sendServerLogMessage("MINIMIZE_WINDOW", {
       width: event.width
     })
@@ -91,7 +97,7 @@ chrome.windows.onBoundsChanged.addListener((event) => {
 chrome.system.display.onDisplayChanged.addListener(() => {
 
   deviceInfo.getAllInfo().then((e) => {
-    if (e.displays > 1) {
+    if (e.displays.length > 1 && state.proctoringMode &&  state.focusMode) {
       sendServerLogMessage("MULTIPLE_MONITORS", { displays: e.displays })
     }
     return true
@@ -100,9 +106,12 @@ chrome.system.display.onDisplayChanged.addListener(() => {
 })
 
 chrome.windows.onFocusChanged.addListener((event) => {
-  if(event < 0){
+  state.focusMode += 1
+  if(event < 0 && state.proctoringMode && state.focusMode > 5){
+    console.log("OFF")
     sendServerLogMessage("WINDOW_OFF", { id: event })
   }
+  saveState()
   return true
 })
 
@@ -130,6 +139,7 @@ const onTabRemoved = () => async (closedTabId) => {
     chrome.tabs.onRemoved.removeListener(boundOnTabRemoved)
     chrome.tabs.onUpdated.removeListener(boundOnTabUpdated)
     state.isWebRtcTabWatcherInitialized = false;
+    state.focusMode = 0
     saveState()
     if (state.proctoringMode) {
       await recreateWebRtcTab();
@@ -147,6 +157,7 @@ const onTabUpdated = () => async (updatedTabId, changeInfo, tab) => {
     if (!state.isProctorMessageSent) {
       console.warn("state.webRtcShareScreenTab loaded — sending message");
       state.isProctorMessageSent = true;
+      state.focusMode = 0
       saveState()
 
 
@@ -235,6 +246,8 @@ function waitForTabToLoad(tabId) {
 
 async function recreateWebRtcTab() {
   try {
+    state.focusMode = 0
+    saveState()
     const newTab = await createTab({
       pinned: true,
       url: chrome.runtime.getURL("page/main.html"),
@@ -279,6 +292,7 @@ async function recreateWebRtcTab() {
 function initWebRtcTabWatcher() {
   if (state.isWebRtcTabWatcherInitialized) return;
   state.isWebRtcTabWatcherInitialized = true;
+  state.focusMode = 0
   saveState()
   console.log("ADD LISTENER")
   console.log("boundOnTabUpdated", boundOnTabUpdated)
@@ -294,6 +308,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "START_PROCTORING") {
     (async () => {
       try {
+        state.focusMode = 0
+        saveState()
         // chrome.windows.create({state: 'fullscreen'})
         const data = await signIn()
 
