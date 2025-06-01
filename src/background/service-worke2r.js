@@ -1,7 +1,7 @@
-import { globalConfig } from "./src/config/globalConfig.js"
-import { DeviceInfo } from "./src/modules/DeviceInfo.js"
-import { PlatformInfo } from "./src/modules/PlatformInfo.js"
-import { SystemRequirementValidator } from "./src/modules/SystemRequirementValidator.js"
+import { globalConfig } from "../config/globalConfig.js"
+import { DeviceInfo } from "../modules/DeviceInfo.js"
+import { PlatformInfo } from "../modules/PlatformInfo.js"
+import { SystemRequirementValidator } from "../modules/SystemRequirementValidator.js"
 
 
 const requirement = new SystemRequirementValidator()
@@ -85,7 +85,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       const { token } = user
-      const response = await fetch(`http://192.168.2.7:5050/api/signin/${token}`)
+      const response = await fetch(`http://192.168.2.5:5050/api/signin/${token}`)
       const data = await response.json()
       if (response.ok) {
         if (data.session.roomId === "") {
@@ -131,8 +131,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const mainUrl = chrome.runtime.getURL("main.html");
 
       const sendProctorMessage = async (updatedTabId) => {
-
-
         if (updatedTabId === lockedTabId) {
           chrome.runtime.sendMessage({
             action: "PROCTOR_STARTED",
@@ -256,7 +254,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       let sessionData = {}
       let data
       try {
-        const response = await fetch(`http://192.168.2.7:5050/api/signin/${token}`)
+        const response = await fetch(`http://192.168.2.5:5050/api/signin/${token}`)
         data = await response.json()
         console.log(data)
         if (response.ok) {

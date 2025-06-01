@@ -1,11 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Procspy",
+  "name": "Procspy Refactored",
   "version": "1.0",
   "description": "Automated Proctoring System Extension",
   "author": "Reza1290",
+  "side_panel": {
+    "default_path": "index.html"
+  },
   "background": {
-    "service_worker": "service-worker.js",
+    "service_worker": "src/background/service-worker.js",
     "type": "module"
   },
   "action": {
@@ -34,8 +37,9 @@
   "host_permissions": [
     "http://*/",
     "https://*/*",
+    "https://192.168.2.5:5050/",
     "<all_urls>",
-    "https://localhost:5050/*"
+    "chrome-extension://"
     
   ],
   
@@ -53,7 +57,7 @@
     "cookies",
     "storage",
     "desktopCapture",
-    "https://localhost:5050/*"
+    "gcm"
 
   ],
   "icons": {

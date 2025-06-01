@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify ./src/scripts/media.js -p esmify > ./build/scripts/media.js"
+    "build": "browserify ./src/scripts/procspy.js -p esmify > ./build/scripts/procspy.js"
   },
   "author": "Reza1290",
   "license": "ISC",
   "dependencies": {
     "browserify": "^17.0.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "mediasoup-client": "^3.8.2",
     "socket.io-client": "^4.8.1"
   },
