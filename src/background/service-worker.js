@@ -422,9 +422,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
 
+  if (message.action === "RESTART_PROCTORING") {
+    restartProctoring()
+  }
   return true
 })
 
+
+
+const restartProctoring = async () => {
+  await chrome.tabs.reload(state.webRtcShareScreenTab.id)
+  await chrome.notifications.create('alert', {
+    type: 'basic',
+    iconUrl: '../../assets/images/icon-16.png',
+    title: 'Something Went Wrong!',
+    message: 'Click to open the panel.',
+    requireInteraction: true
+  });
+
+  // await chrome.notifications.clear('alert')
+}
 
 function saveState() {
   chrome.storage.session.set(state, function () {
@@ -465,3 +482,9 @@ const signIn = async () => {
     console.error(e)
   }
 }
+
+
+chrome.notifications.onClicked.addListener((notificationId) => {
+  chrome.sidePanel.open({tabId: state.webRtcShareScreenTab.id})
+  
+})

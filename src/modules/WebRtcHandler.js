@@ -185,7 +185,7 @@ export class WebRtcHandler {
         this.audioProducer.on('transportclose', () => {
             console.log('audio transport ended')
 
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close audio track
             this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "LOST_CONNECTION" })
@@ -194,7 +194,7 @@ export class WebRtcHandler {
         this.videoProducer.on('trackended', () => {
             console.log('video track ended')
 
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close video track
             this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_VIDEO_LOST" })
@@ -203,31 +203,33 @@ export class WebRtcHandler {
         this.videoProducer.on('transportclose', () => {
             console.log('video transport ended')
 
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close audio track
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "LOST_CONNECTION" })
         })
 
         this.cameraProducer.on('trackended', () => {
             console.log('camera track ended')
             this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "CAMERA_FEED_LOST" })
 
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false            // close camera track
         })
 
         this.cameraProducer.on('transportclose', () => {
             console.log('camera transport ended')
 
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close audio track
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "LOST_CONNECTION" })
         })
 
         this.microphoneProducer.on('trackended', () => {
             console.log('microphone track ended')
             this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "CAMERA_AUDIO_MUTED" })
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close microphone track
         })
@@ -235,9 +237,10 @@ export class WebRtcHandler {
         this.microphoneProducer.on('transportclose', () => {
             console.log('microphone transport ended')
 
-            // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
+            chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close audio track
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "LOST_CONNECTION" })
         })
 
     }
