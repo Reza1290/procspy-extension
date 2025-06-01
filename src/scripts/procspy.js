@@ -116,8 +116,8 @@ const sendMessageToSocket = async (action, payload) => {
 
         }
 
-        await messageHandler.sendMessageToSocket(action, payload);
-
+        const data = await messageHandler.sendMessageToSocket(action, payload);
+        return {ok :true , data}    
     } catch (e) {
         throw e
     }
@@ -234,7 +234,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "UPDATE_DEVICE_INFO"){
         console.log("UPDATE!", message.deviceInfo)
-        sendMessageToSocket("UPDATE_DEVICE_INFO", {deviceInfo: message.deviceInfo}).then(() => sendResponse({ ok: true }))
+        sendMessageToSocket("UPDATE_DEVICE_INFO", {deviceInfo: message.deviceInfo}).then((res) => sendResponse(res))
             .catch((err) => sendResponse({ ok: false, error: err.message }))
         return true
     }

@@ -118,8 +118,9 @@ chrome.windows.onFocusChanged.addListener((event) => {
 
 const updateDeviceInfo = async () => {
   const res = await deviceInfo.getAllInfo()
-  console.log(res)
-  sendDeviceUpdateMessage(res)
+  const response = await sendDeviceUpdateMessage(res)
+  const {authenticate} = response.data
+  return authenticate ?? false
 }
 
 const sendDeviceUpdateMessage = (deviceInfo) => {
@@ -348,7 +349,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         if (res.ok && data?.settings?.PLATFORM_DOMAIN?.value) {
           state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value });
-          await updateDeviceInfo()
+          const authenticate = await updateDeviceInfo()
+          if(!authenticate){
+            stopOrAbortProctoring({notifyServer: false, sendResponse})
+          }
         }
 
         sendResponse(res);
