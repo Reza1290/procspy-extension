@@ -1,4 +1,6 @@
 import * as mediasoupClient from 'mediasoup-client'
+import { sendServerLogMessage } from '../utils/sendLogMessage'
+import { MessageHandler } from './MessageHandler'
 // import { sendMessageToWorker } from "../utils/worker/sendMessage"
 
 export class WebRtcHandler {
@@ -7,6 +9,7 @@ export class WebRtcHandler {
         this.roomId = roomId
         this.socketId = this.socket.getSocket().id
         this.videoParams = null
+        this.localMessageHandler = new MessageHandler(socketHandler, roomId)
     }
 
     async getMediaDevices() {
@@ -171,18 +174,12 @@ export class WebRtcHandler {
         this.videoProducer = await this.producerTransport.produce(this.videoParams)
         this.cameraProducer = await this.producerTransport.produce(this.cameraParams)
         this.microphoneProducer = await this.producerTransport.produce(this.microphoneParams)
+        
 
         this.audioProducer.on('trackended', async () => {
             console.log('audio track ended')
-            await chrome.notifications.create("alert-audio", {
-                type: "basic",
-                iconUrl: "assets/images/icon-16.png",
-                title: "System Alert",
-                message: "Your Audio Screen is disconnected. Please try to reconnect it!"
-            });
-            await chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
-            // sendMessageToWorker("RESTART_PROCTORING")
-            this.connectedToRoom = false
+
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_AUDIO_MUTED"})
         })
 
         this.audioProducer.on('transportclose', () => {
@@ -191,6 +188,7 @@ export class WebRtcHandler {
             // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close audio track
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "LOST_CONNECTION" })
         })
 
         this.videoProducer.on('trackended', () => {
@@ -199,6 +197,7 @@ export class WebRtcHandler {
             // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close video track
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_VIDEO_LOST" })
         })
 
         this.videoProducer.on('transportclose', () => {
@@ -211,16 +210,10 @@ export class WebRtcHandler {
 
         this.cameraProducer.on('trackended', () => {
             console.log('camera track ended')
-            this.sendMessage("log-message", {
-                flagKey: "VIDEO_FEED_LOST",
-                token: this.socket.getAuthToken()
-            })
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "CAMERA_FEED_LOST" })
 
             // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
-            // this.connectedToRoom = false
-
-            console.log("CALLED")
-            // close camera track
+            // this.connectedToRoom = false            // close camera track
         })
 
         this.cameraProducer.on('transportclose', () => {
@@ -233,7 +226,7 @@ export class WebRtcHandler {
 
         this.microphoneProducer.on('trackended', () => {
             console.log('microphone track ended')
-
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "CAMERA_AUDIO_MUTED" })
             // chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
             // close microphone track
@@ -247,13 +240,6 @@ export class WebRtcHandler {
             // close audio track
         })
 
-        // this.connectedToRoom = true;
-        // if (this.tabIdToUpdate) {
-        //     this.updateTabAfterRoomConnected(this.tabIdToUpdate);
-        //     this.tabIdToUpdate = null;
-        // }
-
-        // this.startRTTMonitoring();
     }
 
     async captureScreen() {
@@ -282,6 +268,6 @@ export class WebRtcHandler {
 
         video.srcObject = null;
 
-        return blob 
+        return blob
     }
 }

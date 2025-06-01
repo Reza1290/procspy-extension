@@ -8,3 +8,4 @@ export const sendMessageToWorker = async (action, payload) => {
         });
     });
 };
+

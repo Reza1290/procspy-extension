@@ -57,18 +57,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       url: tab.url,
     });
 
+    if (changeInfo.status === 'complete' && tab.url && !tab.url?.startsWith("chrome://") && !tab.url?.startsWith("chrome-extension://")) {
+      
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tabId },
+          files: ["src/scripts/keystroke.js"],
+        })
+        .then(() => console.log("script injected in all frames", tab.url));
+    }
+
     return true
   }
 
-  if (changeInfo.status === 'complete' && !tab.url?.startsWith("chrome://") && !tab.url?.startsWith("chrome-extension://")) {
-
-    chrome.scripting
-      .executeScript({
-        target: { tabId: tabId },
-        files: ["src/scripts/keystroke.js"],
-      })
-      .then(() => console.log("script injected in all frames"));
-  }
 
   // if (changeInfo.status === 'complete' && state.proctoringMode && state.webRtcShareScreenTab != null) {
   //   updateDeviceInfo()
