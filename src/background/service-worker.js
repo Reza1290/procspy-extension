@@ -440,7 +440,10 @@ const restartProctoring = async () => {
     requireInteraction: true
   });
 
-  // await chrome.notifications.clear('alert')
+  setTimeout(() => {
+    chrome.notifications.clear('alert');
+  }, 4000)
+
 }
 
 function saveState() {
@@ -485,6 +488,9 @@ const signIn = async () => {
 
 
 chrome.notifications.onClicked.addListener((notificationId) => {
-  chrome.sidePanel.open({tabId: state.webRtcShareScreenTab.id})
+
+  (async() => {
+    await chrome.sidePanel.open({tabId: state.webRtcShareScreenTab.id})
+  })()
   
 })

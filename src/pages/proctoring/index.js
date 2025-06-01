@@ -55,10 +55,7 @@ export default async function page({ user }) {
             </table>
         </div>
     </div>
-    <div id="alert-messages" class="hidden">
-        <div class="flex gap-4 bg-red-600 p-5 py-3 justify-between">
-            <p>You have to reconnect in 10 seconds</p>
-        </div>
+    <div id="alert-messages" class="">
     </div>
     <div class="relative flex flex-col justify-end grow  gap-5">
         <div class="absolute inset-0 z-0 overflow-y-auto p-5 flex flex-col-reverse overflow-y-scroll p-5 gap-5" id="message-placeholder" ></div>
@@ -114,7 +111,7 @@ export async function setup() {
                     console.log(response)
                     pingElement.textContent = response.data.ping + " ms";
                     publicIpElement.textContent = response.data.ip
-                    if(lastPings.length > 20){
+                    if (lastPings.length > 20) {
                         lastPings.shift()
                     }
                     lastPings.push(response.data.ping)
@@ -234,27 +231,44 @@ export async function setup() {
             }
         }
 
+        if (message.action === "RESTART_PROCTORING") {
+            console.log("RAWR")
+            let countdown = 10
+            const interval = setInterval(() => {
+                alertMessagePlaceholder.innerHTML = "";
+
+                alertMessagePlaceholder.appendChild(
+                    AlertBox(`Please Share Again Your Screen In ${countdown} secs`)
+                );
+                countdown--;
+
+                if (countdown < 0) {
+                    clearInterval(interval)
+                    alertMessagePlaceholder.innerHTML = ""
+                }
+            }, 1000)
+        }
     })
 
     const drawPing = (data) => {
         var c = document.getElementById("canvasPing");
         var ctx = c.getContext("2d");
         var parentDiv = c.parentElement;
-    
+
         c.width = parentDiv.clientWidth;
         c.height = parentDiv.clientHeight;
-        
+
         ctx.strokeStyle = "#FDFFF5"
         ctx.clearRect(0, 0, c.width, c.height);
-        
-        ctx.moveTo(c.width -  ((data.length - i) * (c.width / 20)), c.height - data[0]); 
-    
+
+        ctx.moveTo(c.width - ((data.length - i) * (c.width / 20)), c.height - data[0]);
+
         for (var i = 1; i < data.length; i++) {
             ctx.lineTo((c.width - ((data.length - i) * (c.width / 20))), c.height - data[i]);
         }
-    
+
         ctx.stroke();
     }
-    
+
 
 }
