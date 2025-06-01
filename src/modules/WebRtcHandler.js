@@ -54,7 +54,7 @@ export class WebRtcHandler {
             this.shareStream(mediaStream)
         } catch (err) {
             console.warn(err.message)
-            alert(err.message)
+            
 
             if (displayStream) {
                 displayStream.getTracks().forEach(track => track.stop())
@@ -62,7 +62,11 @@ export class WebRtcHandler {
             if (deviceStream) {
                 deviceStream.getTracks().forEach(track => track.stop())
             }
-
+            const { proctor_session } = await chrome.storage.session.get()
+            if (!err.message.includes('Permission denied') || proctor_session) {
+                chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" });
+            }
+            
             throw err
         }
     }

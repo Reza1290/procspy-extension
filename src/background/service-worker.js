@@ -58,7 +58,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     });
 
     if (changeInfo.status === 'complete' && tab.url && !tab.url?.startsWith("chrome://") && !tab.url?.startsWith("chrome-extension://")) {
-      
+
       chrome.scripting
         .executeScript({
           target: { tabId: tabId },
@@ -98,7 +98,7 @@ chrome.windows.onBoundsChanged.addListener((event) => {
 chrome.system.display.onDisplayChanged.addListener(() => {
 
   deviceInfo.getAllInfo().then((e) => {
-    if (e.displays.length > 1 && state.proctoringMode &&  state.focusMode) {
+    if (e.displays.length > 1 && state.proctoringMode && state.focusMode) {
       sendServerLogMessage("MULTIPLE_MONITORS", { displays: e.displays })
     }
     return true
@@ -108,7 +108,7 @@ chrome.system.display.onDisplayChanged.addListener(() => {
 
 chrome.windows.onFocusChanged.addListener((event) => {
   state.focusMode += 1
-  if(event < 0 && state.proctoringMode && state.focusMode > 5){
+  if (event < 0 && state.proctoringMode && state.focusMode > 5) {
     console.log("OFF")
     sendServerLogMessage("WINDOW_OFF", { id: event })
   }
@@ -364,62 +364,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "STOP_PROCTORING") {
     (async () => {
+      await stopOrAbortProctoring({ notifyServer: true, sendResponse });
+    })();
+    return true;
+  }
 
-
-      let tabIdWebRtcShareScreenTab = state.webRtcShareScreenTab?.id
-      let tabIdTestPage = state.testPageTab?.id
-      state.isWebRtcTabWatcherInitialized = false
-
-
-
-      // boundOnTabUpdated = null
-      // boundOnTabRemoved = null
-
-      // chrome.tabs.onUpdated.removeListener()
-      state.webRtcShareScreenTab = null
-      state.testPageTab = null
-
-      try {
-        await chrome.tabs.onRemoved.removeListener(boundOnTabRemoved)
-        await chrome.tabs.onUpdated.removeListener(boundOnTabUpdated)
-
-        const response = await chrome.runtime.sendMessage({
-          action: "PROCTOR_STOPPED",
-        })
-
-        if (response.ok) {
-          if (tabIdTestPage != null) {
-            try {
-              await chrome.tabs.remove(tabIdTestPage)
-            } catch (e) {
-            }
-          }
-          await chrome.tabs.create({
-            url: "https://procspy.link/thankyou"
-          })
-          if (tabIdWebRtcShareScreenTab != null) {
-            try {
-              await chrome.tabs.remove(tabIdWebRtcShareScreenTab)
-            } catch (e) {
-            }
-          }
-          await chrome.storage.session.remove(["proctor_session", "auth", "settings", "isProctorMessageSent", "isWebRtcTabWatcherInitialized", "testPageTab", "webRtcShareScreenTab", "proctoringMode"])
-
-          sendResponse({ ok: true })
-        } else {
-          await chrome.tabs.create({
-            url: "https://procspy.link/thankyou"
-          })
-          sendResponse({ ok: false, error: response.error })
-        }
-        state.proctoringMode = false
-      } catch (e) {
-        console.error(e)
-        sendResponse({ ok: false, error: e })
-      }
-      saveState()
-    })()
-    return true
+  if (message.action === "ABORT_PROCTORING") {
+    (async () => {
+      await stopOrAbortProctoring({ notifyServer: false, sendResponse });
+    })();
+    return true;
   }
 
   if (message.action === "RESTART_PROCTORING") {
@@ -445,6 +399,74 @@ const restartProctoring = async () => {
   }, 4000)
 
 }
+
+const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => {
+  const tabIdWebRtcShareScreenTab = state.webRtcShareScreenTab?.id;
+  const tabIdTestPage = state.testPageTab?.id;
+
+  state.isWebRtcTabWatcherInitialized = false;
+  state.webRtcShareScreenTab = null;
+  state.testPageTab = null;
+
+  try {
+    await chrome.tabs.onRemoved.removeListener(boundOnTabRemoved);
+    await chrome.tabs.onUpdated.removeListener(boundOnTabUpdated);
+
+    let response = { ok: true };
+
+    if (notifyServer) {
+      response = await chrome.runtime.sendMessage({ action: "PROCTOR_STOPPED" });
+    }
+
+    if (response.ok) {
+      if (tabIdTestPage != null) {
+        try {
+          await chrome.tabs.remove(tabIdTestPage);
+        } catch (e) {}
+      }
+
+      if (notifyServer) {
+        await chrome.tabs.create({ url: "https://procspy.link/thankyou" });
+      }else{
+        await chrome.tabs.create({ url: "http://procspy.link/aborted_page"})
+      }
+
+      if (tabIdWebRtcShareScreenTab != null) {
+        try {
+          await chrome.tabs.remove(tabIdWebRtcShareScreenTab);
+        } catch (e) {}
+      }
+
+      if(notifyServer){
+        await chrome.storage.session.remove([
+        "auth",
+        "settings",])
+      }
+      await chrome.storage.session.remove([
+        "proctor_session",
+        "isProctorMessageSent",
+        "isWebRtcTabWatcherInitialized",
+        "testPageTab",
+        "webRtcShareScreenTab",
+        "proctoringMode"
+      ]);
+
+      sendResponse({ ok: true });
+    } else {
+      if (notifyServer) {
+        await chrome.tabs.create({ url: "https://procspy.link/thankyou" });
+      }
+      sendResponse({ ok: false, error: response.error });
+    }
+
+    state.proctoringMode = false;
+  } catch (e) {
+    console.error(e);
+    sendResponse({ ok: false, error: e });
+  }
+
+  saveState();
+};
 
 function saveState() {
   chrome.storage.session.set(state, function () {
@@ -472,7 +494,6 @@ const signIn = async () => {
         await removeTabs(state.webRtcShareScreenTab.id);
         state.webRtcShareScreenTab = null;
       }
-      sendResponse({ ok: false, error: "Dont Edit it Please :(" });
       return;
     }
 
@@ -484,13 +505,14 @@ const signIn = async () => {
   } catch (e) {
     console.error(e)
   }
+  return null
 }
 
 
 chrome.notifications.onClicked.addListener((notificationId) => {
 
-  (async() => {
-    await chrome.sidePanel.open({tabId: state.webRtcShareScreenTab.id})
+  (async () => {
+    await chrome.sidePanel.open({ tabId: state.webRtcShareScreenTab.id })
   })()
-  
+
 })

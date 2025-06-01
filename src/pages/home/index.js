@@ -81,7 +81,6 @@ export function setup() {
     // const alertMessages = document.getElementById('alert-messages')
     // alertMessages.classList.add('hidden')
 
-    // TODO: SESSION CHECK if RUNNING
     
 
     startProctoringButton.addEventListener("click", async () => {
@@ -101,8 +100,9 @@ export function setup() {
             navigateTo('proctoring')
         } else {
             await chrome.storage.session.remove(["proctor_session"])
+            await chrome.runtime.sendMessage({action: "ABORT_PROCTORING"})
             const { auth, settings } = await chrome.storage.session.get(["auth","settings"])
-            navigateTo('home', {user: auth, settings, error: data.error})
+            navigateTo('home', {user: auth, settings, error: "You Aborted the Process"})
         }
     })
 }
