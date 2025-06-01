@@ -88,6 +88,7 @@ const createConnection = async (roomId, authToken) => {
 const stopProctoring = async () => {
     try {
         if (socketHandler) {
+            messageHandler.sendMessageToSocket("LOG_MESSAGE", {flagKey: "PROCTOR_STOPPED"})
             socketHandler.disconnectFromSocket()
             socketHandler = null
             messageHandler = null
