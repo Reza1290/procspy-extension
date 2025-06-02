@@ -314,6 +314,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         saveState()
         // chrome.windows.create({state: 'fullscreen'})
         const data = await signIn()
+        
 
         if (!data || !data?.session.roomId) {
           sendResponse({ ok: false, error: "Ask Proctor!" });
@@ -327,7 +328,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           url: chrome.runtime.getURL("page/main.html"),
           active: false
         });
-
 
 
         const tabIdsToRemove = tabs
@@ -351,8 +351,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value });
           const authenticate = await updateDeviceInfo()
           if(!authenticate){
+            console.log("ABORTED!", authenticate)
             stopOrAbortProctoring({notifyServer: false, sendResponse})
-          }
+            sendResponse({ ok: false, error: "Ask Proctor!" })
+            return
+          }          
         }
 
         sendResponse(res);
@@ -455,7 +458,9 @@ const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => 
         "proctoringMode"
       ]);
 
-      sendResponse({ ok: true });
+      if(!notifyServer){
+        sendResponse({ ok: true });
+      }
     } else {
       if (notifyServer) {
         await chrome.tabs.create({ url: "https://procspy.link/thankyou" });

@@ -13,21 +13,25 @@ export class SocketHandler {
         console.log("Create Socket Handler")
         return io(this.socketUrl, {
             autoConnect: false,
-            // auth: {
-            //     token: this.authToken
-            // }
+            auth: {
+                token: this.authToken
+            }
         })
     }
 
     async connectToSocket() {
         console.log("Connect")
         this.socket.connect()
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             this.socket.on('connection-success', ({ socketId }) => {
                 console.log(socketId)
                 this._isConnected = true
                 resolve(true)
             })
+
+            this.socket.once("connect_error", (err) => {
+                reject(new Error(`Socket connection failed: Who Are You?`));
+            });
         })
     }
 
