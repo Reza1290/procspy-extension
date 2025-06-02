@@ -444,12 +444,9 @@ const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => 
         } catch (e) {}
       }
 
-      if(notifyServer){
-        await chrome.storage.session.remove([
-        "auth",
-        "settings",])
-      }
       await chrome.storage.session.remove([
+        "auth",
+        "settings",
         "proctor_session",
         "isProctorMessageSent",
         "isWebRtcTabWatcherInitialized",

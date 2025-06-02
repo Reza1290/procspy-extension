@@ -101,8 +101,7 @@ export function setup() {
         } else {
             await chrome.storage.session.remove(["proctor_session"])
             await chrome.runtime.sendMessage({action: "ABORT_PROCTORING"})
-            const { auth, settings } = await chrome.storage.session.get(["auth","settings"])
-            navigateTo('home', {user: auth, settings, error: `Process Aborted ${data.error || ''}`})
+            navigateTo('default_auth', {error: `Process Aborted ${data.error || ''}`})
         }
     })
 }
