@@ -352,7 +352,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const authenticate = await updateDeviceInfo()
           if(!authenticate){
             console.log("ABORTED!", authenticate)
-            stopOrAbortProctoring({notifyServer: false, sendResponse})
+            stopOrAbortProctoring({notifyServer: false, sendResponse, init: false})
             sendResponse({ ok: false, error: "Ask Proctor!" })
             return
           }          
@@ -407,7 +407,7 @@ const restartProctoring = async () => {
 
 }
 
-const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => {
+const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse, init = false }) => {
   const tabIdWebRtcShareScreenTab = state.webRtcShareScreenTab?.id;
   const tabIdTestPage = state.testPageTab?.id;
 
@@ -455,9 +455,10 @@ const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => 
         "proctoringMode"
       ]);
 
-      if(!notifyServer){
+      if(!init){
         sendResponse({ ok: true });
       }
+      
     } else {
       if (notifyServer) {
         await chrome.tabs.create({ url: "https://procspy.link/thankyou" });
