@@ -314,6 +314,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         saveState()
         // chrome.windows.create({state: 'fullscreen'})
         const data = await signIn()
+        
 
         if (!data || !data?.session.roomId) {
           sendResponse({ ok: false, error: "Ask Proctor!" });
@@ -327,7 +328,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           url: chrome.runtime.getURL("page/main.html"),
           active: false
         });
-
 
 
         const tabIdsToRemove = tabs
@@ -351,8 +351,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value });
           const authenticate = await updateDeviceInfo()
           if(!authenticate){
-            stopOrAbortProctoring({notifyServer: false, sendResponse})
-          }
+            console.log("ABORTED!", authenticate)
+            stopOrAbortProctoring({notifyServer: false, sendResponse, init: false})
+            sendResponse({ ok: false, error: "Ask Proctor!" })
+            return
+          }          
         }
 
         sendResponse(res);
@@ -404,7 +407,7 @@ const restartProctoring = async () => {
 
 }
 
-const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => {
+const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse, init = false }) => {
   const tabIdWebRtcShareScreenTab = state.webRtcShareScreenTab?.id;
   const tabIdTestPage = state.testPageTab?.id;
 
@@ -441,12 +444,9 @@ const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => 
         } catch (e) {}
       }
 
-      if(notifyServer){
-        await chrome.storage.session.remove([
-        "auth",
-        "settings",])
-      }
       await chrome.storage.session.remove([
+        "auth",
+        "settings",
         "proctor_session",
         "isProctorMessageSent",
         "isWebRtcTabWatcherInitialized",
@@ -455,7 +455,10 @@ const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse }) => 
         "proctoringMode"
       ]);
 
-      sendResponse({ ok: true });
+      if(!init){
+        sendResponse({ ok: true });
+      }
+      
     } else {
       if (notifyServer) {
         await chrome.tabs.create({ url: "https://procspy.link/thankyou" });

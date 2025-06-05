@@ -10,7 +10,7 @@ const routes = {
 }
 
 export function navigateTo(path, props = {}) {
-  history.pushState({ props }, '', path)
+  history.replaceState({ props }, '', path)
   handleRouteChange()
 }
 

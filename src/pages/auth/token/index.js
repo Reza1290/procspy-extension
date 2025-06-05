@@ -1,7 +1,7 @@
 import { globalConfig } from "../../../config/globalConfig.js"
 import { navigateTo } from "../../../utils/router.js"
 
-export default async function page({ users }) {
+export default async function page({error, users }) {
     return `
      <div id="token-page" class="flex h-screen w-full flex-col bg-gray-950">
         <div class="flex flex-col items-center justify-center gap-2 border-b border-white/10 px-5 py-5 text-slate-100">
@@ -21,10 +21,14 @@ export default async function page({ users }) {
                 <small class="text-slate-400 italic text-xs">*Unique token.</small>
             </div>
         </div>
-        <div id="alert-messages" class="hidden">
-            <div class="flex gap-4 bg-red-500 p-5 py-3 justify-between">
-                <p></p>
-            </div>
+        <div id="alert-messages">
+        ${
+            error ? `
+                <div class="flex gap-4 bg-red-500 p-5 py-3 justify-between">
+                    <p>${error}</p>
+                </div>
+                ` : ``
+            }
         </div>
         <div class="flex flex-col justify-center gap-4 bg-gray-800/30 p-5 border-white/10 border-t">
             <button id="btn-token-submit"
