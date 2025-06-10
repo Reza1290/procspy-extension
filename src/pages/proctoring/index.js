@@ -232,7 +232,7 @@ export async function setup() {
         }
 
         if (message.action === "RESTART_PROCTORING") {
-            console.log("RAWR")
+
             let countdown = 10
             const interval = setInterval(() => {
                 alertMessagePlaceholder.innerHTML = "";
@@ -247,6 +247,26 @@ export async function setup() {
                     alertMessagePlaceholder.innerHTML = ""
                 }
             }, 1000)
+        }
+
+        if (message.action === "ABORT_PROCTORING") {
+            const {data} = message
+            let countdown = 3
+            const interval = setInterval(() => {
+                alertMessagePlaceholder.innerHTML = "";
+
+                alertMessagePlaceholder.appendChild(
+                    AlertBox(`Proctoring Aborted, Redirecting ${countdown} secs`)
+                );
+                countdown--;
+
+                if (countdown < 0) {
+                    clearInterval(interval)
+                    alertMessagePlaceholder.innerHTML = ""
+                }
+            }, 1000)
+
+            navigateTo('default_auth', {error: `Process Aborted ${data.error || ''}`})
         }
     })
 
