@@ -386,6 +386,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "RESTART_PROCTORING") {
     restartProctoring()
   }
+
+  if (message.action === "GET_DEVICE_INFO") {
+    (async()=>{
+      const res = await deviceInfo.getAllInfo()
+      sendResponse(res)
+    })()
+  }
   return true
 })
 

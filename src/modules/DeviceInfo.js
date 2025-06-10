@@ -23,9 +23,21 @@ export class DeviceInfo {
         const match = ua.match(/(firefox|msie|chrome|safari|edg|opera)[\/\s]?([\d.]+)/i) || [];
         this.deviceInfo.browser = match[1] || 'Unknown';
         this.deviceInfo.browserVersion = match[2] || 'Unknown';
+
+        return ua
     }
 
-    getDeviceId() {
+    static async getStaticDeviceId() {
+        return new Promise((resolve) => {
+            chrome.instanceID.getID(
+                (e) => {
+                    resolve(e)
+                }
+            )
+        });
+    }
+
+    async getDeviceId() {
         chrome.instanceID.getID(
             (e) => {
                 this.deviceInfo.deviceId = e
