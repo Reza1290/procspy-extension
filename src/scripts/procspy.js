@@ -26,36 +26,50 @@ const createConnection = async (roomId, authToken) => {
 
             if (!listenerRegistered && socketHandler._isConnected) {
                 messageHandler.messageListener(async (data) => {
-                    console.log('Received data:', data)
-                    const { chats } = await chrome.storage.session.get(["chats"])
-                    console.log(chats)
-                    if (chats) {
-                        await chrome.storage.session.set({
-                            chats: [
-                                ...chats,
-                                {
-                                    from: "proctor",
-                                    body: data.body
-                                }
-                            ]
+
+                    const { action } = await data
+
+
+                    if (action === "SEND_CHAT") {
+                        const { chats } = await chrome.storage.session.get(["chats"])
+                        if (chats) {
+                            await chrome.storage.session.set({
+                                chats: [
+                                    ...chats,
+                                    {
+                                        from: "proctor",
+                                        body: data.body
+                                    }
+                                ]
+                            })
+
+                        } else {
+
+                            await chrome.storage.session.set({
+                                chats: [
+                                    {
+                                        from: "proctor",
+                                        body: data.body
+                                    }
+                                ]
+                            })
+                        }
+
+                        await chrome.runtime.sendMessage({
+                            action: "PRIVATE_MESSAGE",
+                            data
                         })
 
-                    } else {
+                    }
 
-                        await chrome.storage.session.set({
-                            chats: [
-                                {
-                                    from: "proctor",
-                                    body: data.body
-                                }
-                            ]
+                    if (action === "ABORT_PROCTORING") {
+                        
+                        await chrome.runtime.sendMessage({
+                            action: "ABORT_PROCTORING",
+                            data
                         })
                     }
 
-                    await chrome.runtime.sendMessage({
-                        action: "PRIVATE_MESSAGE",
-                        data
-                    })
                 });
                 listenerRegistered = true;
             }
@@ -108,16 +122,16 @@ const sendMessageToSocket = async (action, payload) => {
     try {
         if (payload.attachment) {
             const imageBlob = await webRtcHandler.captureScreen();
-            
+
             const base64 = await blobToBase64(imageBlob)
-            
+
 
             payload.attachment.file = base64;
 
         }
 
         const data = await messageHandler.sendMessageToSocket(action, payload);
-        return {ok :true , data}    
+        return { ok: true, data }
     } catch (e) {
         throw e
     }
@@ -150,14 +164,14 @@ const getRttSocket = async () => {
 
 const getGpuInfo = async () => {
 
-    try{
+    try {
         console.log("GPU ENAK")
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        
+
         let vendor = 'Unknown';
         let renderer = 'Unknown';
-        
+
         if (gl) {
             const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
             if (debugInfo) {
@@ -165,11 +179,11 @@ const getGpuInfo = async () => {
                 renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
             }
         }
-        return {vendor, renderer}
-    }catch(e){
+        return { vendor, renderer }
+    } catch (e) {
         throw e
     }
-    
+
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log(message)
@@ -227,14 +241,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "GPU_INFO") {
         getGpuInfo()
-            .then((response)=>sendResponse(response))
-            .catch((error)=>sendResponse({ok:false, error: error.message}))
+            .then((response) => sendResponse(response))
+            .catch((error) => sendResponse({ ok: false, error: error.message }))
         return true
     }
 
-    if (message.action === "UPDATE_DEVICE_INFO"){
+    if (message.action === "UPDATE_DEVICE_INFO") {
         console.log("UPDATE!", message.deviceInfo)
-        sendMessageToSocket("UPDATE_DEVICE_INFO", {deviceInfo: message.deviceInfo}).then((res) => sendResponse(res))
+        sendMessageToSocket("UPDATE_DEVICE_INFO", { deviceInfo: message.deviceInfo }).then((res) => sendResponse(res))
             .catch((err) => sendResponse({ ok: false, error: err.message }))
         return true
     }

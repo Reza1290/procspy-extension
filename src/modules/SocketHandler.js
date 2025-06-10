@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client'
+import { DeviceInfo } from './DeviceInfo'
 
 export class SocketHandler {
     constructor(socketUrl, authToken) {
@@ -14,14 +15,22 @@ export class SocketHandler {
         return io(this.socketUrl, {
             autoConnect: false,
             auth: {
-                token: this.authToken
+                token: this.authToken,
+                userAgent: (new DeviceInfo()).getBrowserInfo()
             }
         })
     }
 
     async connectToSocket() {
         console.log("Connect")
+        this.socket.auth.deviceId = await DeviceInfo.getStaticDeviceId()
+        
         this.socket.connect()
+        this.socket.on("disconnect", (reason) => {
+            if(reason.startsWith("transport close")){
+                chrome.runtime.sendMessage({action: "ABORT_PROCTORING"})
+            }
+        });
         return new Promise((resolve, reject) => {
             this.socket.on('connection-success', ({ socketId }) => {
                 console.log(socketId)

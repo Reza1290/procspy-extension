@@ -386,6 +386,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "RESTART_PROCTORING") {
     restartProctoring()
   }
+
+  if (message.action === "GET_DEVICE_INFO") {
+    (async()=>{
+      const res = await deviceInfo.getAllInfo()
+      sendResponse(res)
+    })()
+  }
   return true
 })
 
@@ -398,7 +405,7 @@ const restartProctoring = async () => {
     iconUrl: '../../assets/images/icon-16.png',
     title: 'Something Went Wrong!',
     message: 'Click to open the panel.',
-    requireInteraction: true
+    requireInteraction: false
   });
 
   setTimeout(() => {
