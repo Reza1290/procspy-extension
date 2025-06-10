@@ -266,7 +266,7 @@ export async function setup() {
                 }
             }, 1000)
 
-            navigateTo('default_auth', {error: `Process Aborted ${data.error || ''}`})
+            navigateTo('default_auth', {error: `Process Aborted ${data?.error ?? ': Cant Connect To The Server'}`})
         }
     })
 

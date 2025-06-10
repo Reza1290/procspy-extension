@@ -405,7 +405,7 @@ const restartProctoring = async () => {
     iconUrl: '../../assets/images/icon-16.png',
     title: 'Something Went Wrong!',
     message: 'Click to open the panel.',
-    requireInteraction: true
+    requireInteraction: false
   });
 
   setTimeout(() => {
