@@ -77,7 +77,7 @@ export function setup() {
 
 async function authSignIn(token) {
     try {
-        const response = await fetch(`${globalConfig.authEndpoint || "https://192.168.2.5:5050"}/api/signin/${token}`)
+        const response = await fetch(`${globalConfig.authEndpoint || "https://192.168.2.5"}/api/signin/${token}`)
         const data = await response.json()
 
         return data
