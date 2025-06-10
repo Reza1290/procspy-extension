@@ -53,7 +53,7 @@ export function setup() {
         }
         const data = await authSignIn(token)
         console.log(data)
-        if(data.user && data.session?.status !== "completed") {
+        if(data?.user) {
             await chrome.storage.session.set({
                 auth: {
                     identifier: data?.user?.identifier,
@@ -69,11 +69,7 @@ export function setup() {
             navigateTo('home', data)
         } else {
            
-            alertMessages.classList.remove('hidden')
-            const paragraph = alertMessages.querySelector('p');
-            if (paragraph) {
-                paragraph.textContent = data.session?.status ? "Session Ended" : data.error;
-            }
+            navigateTo('default_auth', data)
         }
     })
 }
@@ -84,13 +80,7 @@ async function authSignIn(token) {
         const response = await fetch(`${globalConfig.authEndpoint || "https://192.168.2.5:5050"}/api/signin/${token}`)
         const data = await response.json()
 
-        if (response.ok) {
-            return data
-        } else {
-            return {error : "Token Not Found"}
-        }
+        return data
     } catch (error) {
-        console.error(error)
-        return { error }
     }
 }
