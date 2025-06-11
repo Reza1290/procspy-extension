@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client'
-import { DeviceInfo } from './DeviceInfo'
+import { DeviceInfo } from './DeviceInfo.js'
 
 export class SocketHandler {
     constructor(socketUrl, authToken) {

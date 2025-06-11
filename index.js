@@ -1,4 +1,4 @@
-import { navigateTo } from "./src/utils/router.js"
+import { navigateTo } from "@utils/router.js"
 
 
 window.addEventListener('DOMContentLoaded', async () => {

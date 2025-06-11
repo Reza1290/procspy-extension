@@ -1,5 +1,5 @@
-import { navigateTo } from "../../utils/router.js"
-import { sendMessageToWorker } from "../../utils/worker/sendMessage.js"
+import { navigateTo } from "@utils/router.js"
+import { sendMessageToWorker } from "@utils/worker/sendMessage.js"
 
 export default async function page({error, user, settings}) {
 

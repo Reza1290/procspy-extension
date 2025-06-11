@@ -1,7 +1,5 @@
 import * as mediasoupClient from 'mediasoup-client'
-import { sendServerLogMessage } from '../utils/sendLogMessage'
-import { MessageHandler } from './MessageHandler'
-// import { sendMessageToWorker } from "../utils/worker/sendMessage"
+import { MessageHandler } from './MessageHandler.js'
 
 export class WebRtcHandler {
     constructor(socketHandler, roomId) {

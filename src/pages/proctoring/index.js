@@ -1,5 +1,5 @@
-import { navigateTo } from "../../utils/router.js"
-import { sendMessageToWorker } from "../../utils/worker/sendMessage.js"
+import { navigateTo } from "@utils/router.js"
+import { sendMessageToWorker } from "@utils/worker/sendMessage.js"
 import AlertBox from "./components/AlertBox.js"
 import MessageFromMeBox from "./components/MessageFromMeBox.js"
 import MessageFromProctorBox from "./components/MessageFromProctorBox.js"
