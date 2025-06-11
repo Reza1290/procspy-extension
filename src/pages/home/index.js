@@ -86,7 +86,6 @@ export function setup() {
     startProctoringButton.addEventListener("click", async () => {
         navigateTo('loading')
         const data = await sendMessageToWorker("START_PROCTORING")
-        console.log(data)
         
         if (data.ok) {
             if(data.roomId && data.token){

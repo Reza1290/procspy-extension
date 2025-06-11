@@ -13,7 +13,6 @@ export async function render(viewPath, props = {}) {
       const html = await module.default(props)
       app.innerHTML = html
       if (typeof module.setup === 'function') {
-        console.log('setup')
         module.setup()
       }
     } else {

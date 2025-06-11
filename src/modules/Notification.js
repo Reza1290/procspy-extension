@@ -36,13 +36,11 @@ export class Notification {
         };
 
         chrome.notifications.update(this.notificationId, options, (wasUpdated) => {
-            console.log(`Notification ${this.notificationId} updated: ${wasUpdated}`);
         });
     }
 
     clearNotification() {
         chrome.notifications.clear(this.notificationId, (wasCleared) => {
-            console.log(`Notification ${this.notificationId} cleared: ${wasCleared}`);
         });
     }
 

@@ -31,7 +31,6 @@ const initApp = async () => {
   const startTime = Date.now();
   try {
     const proctorState = await sendMessageToWorker("PROCTOR_STATE")
-    console.log(proctorState)
     if (proctorState?.data.proctor_state != undefined && ["resume", "pause"].includes(proctorState?.data.proctor_state)) {
 
       await route("proctoring")
@@ -53,7 +52,6 @@ const initApp = async () => {
       }, remainingTime);
     } else {
       const isLoggedIn = await sendMessageToWorker("IS_AUTHENTICATED");
-      console.log(isLoggedIn)
       if (isLoggedIn.data.isAuthenticated) {
         await route("identifier")
         await initIdentifier(isLoggedIn.data)
@@ -86,11 +84,8 @@ const initTokenPage = async () => {
     const response = await sendMessageToWorker("AUTH_USER", {
       token: tokenInput.value
     })
-    // console.log('rawr')
     const data = response.data
-    console.log(data)
     if (response.status) {
-      console.log('true')
       await route("identifier")
       await initIdentifier(response.data)
     } else {
@@ -111,7 +106,6 @@ const initIdentifier = async (response) => {
   const idUserComponent = document.getElementById('id-user')
   const nameComponent = document.getElementById('name')
   const additionalInfoComponent = document.getElementById('additional-information')
-  console.log(response)
   platformComponent.value = response.settings.PLATFORM_NAME.value ?? ""
 
   idUserComponent.value = response.user.identifier
@@ -125,7 +119,6 @@ const initIdentifier = async (response) => {
 
   startProctoringButton.addEventListener("click", async () => {
     const data = await sendMessageToWorker("START_PROCTORING")
-    console.log(data)
     if (data.status) {
       route("proctoring")
 
@@ -142,11 +135,9 @@ const initIdentifier = async (response) => {
 
 const initProctoring = async () => {
   const proctoringData = await sendMessageToWorker("INIT_PROCTORING")
-  console.log(proctoringData)
   const infoDetailButton = document.getElementById("info-detail-button")
 
   infoDetailButton.addEventListener("click", async () => {
-    console.log('clciked')
     const elem = document.getElementById("info-detail");
 
     if (elem.classList.contains("h-0") && elem.classList.contains("hidden")) {
@@ -189,7 +180,6 @@ const sendMessageToCurrentTab = async (action, payload) => {
 document.addEventListener("click", function (event) {
 
   if (event.target && event.target.matches("button#start")) {
-    console.log("Button clicked!");
 
     const elementVerify = document.querySelectorAll('.status');
     const errorElement = document.getElementById('error-messages');
@@ -225,21 +215,9 @@ document.addEventListener("click", function (event) {
       sendResponse({ error: error.message });
 
     }
-    // chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    //   chrome.tabs.sendMessage(tabs[0].id, { action: "MEDIA_DEVICES_VALIDATOR" }, function (response) {
-    //     if (!chrome.runtime.lastError) {
-    //       console.log("Response:", response);
-    //     }
-    //   });
-    // });
+   
   }
 
-  // if(event.target && event.target.matches("button#start-proctoring")) {
-  //   console.log("test")
-
-
-
-  // }
 });
 
 
@@ -252,14 +230,12 @@ document.addEventListener("DOMContentLoaded", (event) => {
       const result = message.data
       const verificationData = result.data
       const allPassed = result?.allPassed
-      console.log(allPassed)
 
 
 
 
       verificationData.forEach((val, key) => {
         const elem = document.getElementById(val?.type)
-        console.log(elem)
         elem.classList.remove(...elem.classList)
         if (val?.validate) {
           elem.classList.add(...passedComponentClassList.split(' '))

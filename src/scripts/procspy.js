@@ -76,7 +76,6 @@ const createConnection = async (roomId, authToken) => {
         }
 
         if (!webRtcHandler && socketHandler._isConnected) {
-            console.log("Create WEB RTC")
             webRtcHandler = new WebRtcHandler(socketHandler, roomId)
 
 
@@ -155,7 +154,6 @@ const getRttSocket = async () => {
     if (!socketHandler) throw new Error("Socket Not Connected!")
     try {
         const { ip, rtt } = await socketHandler.getRTT()
-        console.log(rtt)
         return { ok: true, data: { ip, ping: rtt } }
     } catch (e) {
         throw e
@@ -165,7 +163,6 @@ const getRttSocket = async () => {
 const getGpuInfo = async () => {
 
     try {
-        console.log("GPU ENAK")
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
@@ -186,9 +183,7 @@ const getGpuInfo = async () => {
 
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message)
     if (message.action === 'PROCTOR_STARTED') {
-        console.log("HELLO AKU INIT", new Date())
         const { roomId, token } = message
 
         createConnection(roomId, token)
@@ -247,7 +242,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "UPDATE_DEVICE_INFO") {
-        console.log("UPDATE!", message.deviceInfo)
         sendMessageToSocket("UPDATE_DEVICE_INFO", { deviceInfo: message.deviceInfo }).then((res) => sendResponse(res))
             .catch((err) => sendResponse({ ok: false, error: err.message }))
         return true

@@ -97,7 +97,6 @@ export function setup() {
     const actionBar = document.getElementById('action-bar');
 
 
-    console.log('req')
     let cam, mic
     startBtn?.addEventListener("click", async () => {
         const requirement = new SystemRequirementValidator()
@@ -126,7 +125,7 @@ export function setup() {
             mic = stream.getAudioTracks()[0]?.getSettings();
 
             devicePermission = true
-            console.log('granted')
+            
             stream.getTracks().forEach(track => track.stop());
         } catch (e) {
             devicePermission = false

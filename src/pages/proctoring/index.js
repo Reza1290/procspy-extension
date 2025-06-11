@@ -86,7 +86,6 @@ export async function setup() {
         if (data.ok) {
             navigateTo('default_auth')
         } else {
-            console.log(data.error)
         }
     })
 
@@ -101,14 +100,12 @@ export async function setup() {
 
         if (!isHidden && rttInterval === null) {
             rttInterval = setInterval(async () => {
-                console.log("RTT CHECK CALLED");
 
                 const response = await chrome.runtime.sendMessage({
                     action: "GET_RTT",
                 });
 
                 if (response.ok) {
-                    console.log(response)
                     pingElement.textContent = response.data.ping + " ms";
                     publicIpElement.textContent = response.data.ip
                     if (lastPings.length > 20) {
@@ -131,19 +128,10 @@ export async function setup() {
 
 
 
-    //TODO: Info Detail
-    //      -> Ping
-    //      -> Ip
-
-    //TODO: Chat Handling Using ProcspySocket.js
-    //      -> Send Message
-    //      -> Recieve Message
 
     const { chats } = await chrome.storage.session.get(["chats"])
-    console.log("render")
 
     if (chats) {
-        console.log(chats)
         chats.forEach(element => {
             if (element.from === "me") {
                 if (!messagePlaceholder.firstElementChild) {
@@ -169,7 +157,6 @@ export async function setup() {
         if (event.key === "Enter") {
             event.preventDefault();
             const body = await chatbox.value
-            // console.log(body)
             if (body != "") {
                 const data = await chrome.runtime.sendMessage({
                     action: "PRIVATE_MESSAGE",
@@ -219,9 +206,7 @@ export async function setup() {
     chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         if (message.action === "PRIVATE_MESSAGE") {
-            console.log(message.data)
             const data = message.data
-            console.log(data)
 
             if (!messagePlaceholder.firstElementChild) {
                 messagePlaceholder.appendChild(MessageFromProctorBox(data.body))

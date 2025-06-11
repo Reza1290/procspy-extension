@@ -13,7 +13,6 @@ export default async function page({ users }) {
         const startTime = Date.now();
         try {
             const proctorState = await sendMessageToWorker("PROCTOR_STATE")
-            console.log(proctorState)
             if (proctorState?.data.proctor_state != undefined && ["resume", "pause"].includes(proctorState?.data.proctor_state)) {
                 await route("proctoring")
                 await initProctoring()
@@ -34,7 +33,6 @@ export default async function page({ users }) {
                 }, remainingTime);
             } else {
                 const isLoggedIn = await sendMessageToWorker("IS_AUTHENTICATED");
-                console.log(isLoggedIn)
                 if (isLoggedIn.data.isAuthenticated) {
                     await route("identifier")
                     await initIdentifier(isLoggedIn.data)
@@ -59,7 +57,6 @@ export default async function page({ users }) {
 
     const fetch = async () =>{          
           chrome.storage.session.get(["test"]).then((result) => {
-            console.log("Value is " + result.test);
           });
     }
     // await fetch()
