@@ -23,6 +23,7 @@ export default {
     background: './src/background/service-worker.js',
     procspy: './src/scripts/procspy.js',
     ask_permissions: './src/scripts/ask_permissions.js',
+    keystroke: './src/scripts/keystroke.js',
     ...pageEntries, 
   },
   output: {

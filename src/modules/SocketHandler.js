@@ -36,7 +36,7 @@ export class SocketHandler {
             })
 
             this.socket.once("connect_error", (err) => {
-                reject(new Error(`Socket connection failed: Who Are You?`));
+                reject(new Error(`Socket connection failed: ${err}`));
             });
         })
     }

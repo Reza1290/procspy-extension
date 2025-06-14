@@ -25,7 +25,6 @@
   "host_permissions": [
     "http://*/",
     "https://*/*",
-    "https://192.168.2.5:5050/",
     "<all_urls>",
     "chrome-extension://"
     
@@ -34,6 +33,7 @@
     {
       "resources": [
         "scripts/procspy.js",
+        "scripts/keystroke.js",
         "page/ask.html"
       ],
       "matches": ["<all_urls>"]

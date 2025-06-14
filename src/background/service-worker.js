@@ -1,3 +1,4 @@
+import { globalConfig } from '../config/globalConfig.js';
 import { DeviceInfo } from '../modules/DeviceInfo.js';
 let state = {
   isWebRtcTabWatcherInitialized: false,
@@ -61,7 +62,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       chrome.scripting
         .executeScript({
           target: { tabId: tabId },
-          files: ["src/scripts/keystroke.js"],
+          files: ["scripts/keystroke.js"],
         })
         
     }
@@ -486,7 +487,7 @@ const signIn = async () => {
     }
 
     const { token } = auth;
-    const response = await fetch(`http://192.168.2.5:5050/api/signin/${token}`);
+    const response = await fetch(`${globalConfig.authEndpoint || "http://192.168.2.5:5050"}/api/signin/${token}`);
     const data = await response.json();
     if (!response.ok) return null
     return data
