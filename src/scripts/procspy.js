@@ -101,11 +101,11 @@ const createConnection = async (roomId, authToken) => {
 const stopProctoring = async () => {
     try {
         if (socketHandler) {
+            webRtcHandler = null
+            messageHandler = null
+            listenerRegistered = false
             socketHandler.disconnectFromSocket()
             socketHandler = null
-            messageHandler = null
-            webRtcHandler = null
-            listenerRegistered = false
 
             return { ok: true }
         } else {
