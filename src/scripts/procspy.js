@@ -101,10 +101,10 @@ const createConnection = async (roomId, authToken) => {
 const stopProctoring = async () => {
     try {
         if (socketHandler) {
+            socketHandler.disconnectFromSocket()
             webRtcHandler = null
             messageHandler = null
             listenerRegistered = false
-            socketHandler.disconnectFromSocket()
             socketHandler = null
 
             return { ok: true }
@@ -188,7 +188,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         createConnection(roomId, token)
             .then(async (response) => {
-                sendMessageToSocket("LOG_MESSAGE", { flagKey: "CONNECT" })
                 sendResponse({ ...response, roomId, token })
             })
 
