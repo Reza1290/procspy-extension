@@ -52,7 +52,7 @@ export class WebRtcHandler {
             this.shareStream(mediaStream)
         } catch (err) {
             console.warn(err.message)
-            
+
 
             if (displayStream) {
                 displayStream.getTracks().forEach(track => track.stop())
@@ -64,13 +64,17 @@ export class WebRtcHandler {
             if (!err.message.includes('Permission denied') || proctor_session) {
                 chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" });
             }
-            
+
             throw err
         }
     }
 
     shareStream(stream) {
-
+        if ((stream.deviceStream.getVideoTracks()).length > 0) {
+            const cameraTrack = stream.deviceStream.getVideoTracks()[0];
+            const cameraName = cameraTrack?.label;
+            chrome.storage.session.set({ cam: cameraName ?? "" });
+        }
         this.audioParams = {
             appData: {
                 name: "audio"
@@ -173,11 +177,11 @@ export class WebRtcHandler {
         this.videoProducer = await this.producerTransport.produce(this.videoParams)
         this.cameraProducer = await this.producerTransport.produce(this.cameraParams)
         this.microphoneProducer = await this.producerTransport.produce(this.microphoneParams)
-        
+
 
         this.audioProducer.on('trackended', async () => {
 
-            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_AUDIO_MUTED"})
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_AUDIO_MUTED" })
         })
 
         this.audioProducer.on('transportclose', () => {

@@ -13,9 +13,11 @@ export default async function page({ user }) {
         <p class="rounded-md bg-white/10 p-1 px-2 text-center text-sm italic text-slate-300">You are being proctored,
             please be wise.</p>
     </div>
-    <div class="flex gap-4 bg-gray-800/30 p-5 border-white/10 border-b">
+    <div class="flex flex-col gap-4 bg-gray-800/30 p-5 border-white/10 border-b">
         <button class="w-full rounded-md px-5 py-2 font-semibold text-white bg-red-700 cursor-pointer" id="stop-proctoring">Stop
-            Proctor</button>
+            Proctored</button>
+        <button class="w-full rounded-md px-5 py-2 font-semibold bg-white cursor-pointer text-black" id="restart-proctoring">Restart
+            Proctored</button>
 
     </div>
     <div class="flex flex-col  bg-gray-800/30 p-5 py-1 border-white/10 border-b cursor-pointer">
@@ -73,6 +75,7 @@ export default async function page({ user }) {
 export async function setup() {
 
     const stopProctoringButton = document.getElementById('stop-proctoring')
+    const restartProctoringButton = document.getElementById('restart-proctoring')
     const infoDetailButton = document.getElementById('info-detail-button')
     const infoDetailPanel = document.getElementById('info-detail')
     const messagePlaceholder = document.getElementById('message-placeholder')
@@ -82,6 +85,15 @@ export async function setup() {
     stopProctoringButton.addEventListener("click", async () => {
         //TODO: CONFIRMATION BUTTON
         const data = await sendMessageToWorker("STOP_PROCTORING")
+        await chrome.storage.session.remove(["proctor_session", "auth", "settings", "chats"])
+        if (data.ok) {
+            navigateTo('default_auth')
+        } else {
+        }
+    })
+
+    restartProctoringButton.addEventListener("click", async () => {
+        const data = await sendMessageToWorker("ABORT_PROCTORING")
         await chrome.storage.session.remove(["proctor_session", "auth", "settings", "chats"])
         if (data.ok) {
             navigateTo('default_auth')

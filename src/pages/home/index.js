@@ -69,7 +69,7 @@ export default async function page({error, user, settings}) {
         <div class="flex flex-col justify-center gap-4 bg-gray-800/30 p-5 border-white/10 border-t">
         <small class="text-red-300 italic">*Make sure to open the webpage test exam first eventhough this will automatically opened.</small>
         
-        <button class="w-full rounded-md px-5 py-2 font-semibold text-white bg-gray-800 cursor-pointer" id="start-proctoring">Start Procotor</button>
+        <button class="w-full rounded-md px-5 py-2 font-semibold text-white bg-gray-800 cursor-pointer" id="start-proctoring">Start Proctored Mode</button>
         </div>
     </div>
     `
