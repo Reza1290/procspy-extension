@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('ruin')
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         const cam = stream.getVideoTracks()[0]?.getSettings();
@@ -12,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.close()
     } catch (err) {
         console.error("Media error:", err);
-        window.alert('Please Approve Device Permission for The Extension (go to settings or Reinstall)')
+        window.alert('Please Approve Device Permission for The Extension (go to settings or Reinstall) Try Change your Device e.g mic/cam')
         window.location.href = `chrome://settings/content#media-stream-mic`
     } finally {
         // window.close()

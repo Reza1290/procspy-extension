@@ -1,7 +1,5 @@
 import * as mediasoupClient from 'mediasoup-client'
-import { sendServerLogMessage } from '../utils/sendLogMessage'
-import { MessageHandler } from './MessageHandler'
-// import { sendMessageToWorker } from "../utils/worker/sendMessage"
+import { MessageHandler } from './MessageHandler.js'
 
 export class WebRtcHandler {
     constructor(socketHandler, roomId) {
@@ -54,7 +52,7 @@ export class WebRtcHandler {
             this.shareStream(mediaStream)
         } catch (err) {
             console.warn(err.message)
-            
+
 
             if (displayStream) {
                 displayStream.getTracks().forEach(track => track.stop())
@@ -66,13 +64,17 @@ export class WebRtcHandler {
             if (!err.message.includes('Permission denied') || proctor_session) {
                 chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" });
             }
-            
+
             throw err
         }
     }
 
     shareStream(stream) {
-
+        if ((stream.deviceStream.getVideoTracks()).length > 0) {
+            const cameraTrack = stream.deviceStream.getVideoTracks()[0];
+            const cameraName = cameraTrack?.label;
+            chrome.storage.session.set({ cam: cameraName ?? "" });
+        }
         this.audioParams = {
             appData: {
                 name: "audio"
@@ -129,11 +131,9 @@ export class WebRtcHandler {
             params
         }) => {
             if (params.error) {
-                console.log(params.error)
                 return
             }
 
-            console.log(params)
 
             this.producerTransport = this.device.createSendTransport(params)
 
@@ -151,7 +151,6 @@ export class WebRtcHandler {
             })
 
             this.producerTransport.on('produce', async (parameters, callback, errback) => {
-                console.log('parameters', parameters)
 
                 try {
                     await this.socket.getSocket().emit('transport-produce', {
@@ -178,16 +177,14 @@ export class WebRtcHandler {
         this.videoProducer = await this.producerTransport.produce(this.videoParams)
         this.cameraProducer = await this.producerTransport.produce(this.cameraParams)
         this.microphoneProducer = await this.producerTransport.produce(this.microphoneParams)
-        
+
 
         this.audioProducer.on('trackended', async () => {
-            console.log('audio track ended')
 
-            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_AUDIO_MUTED"})
+            this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "SCREEN_AUDIO_MUTED" })
         })
 
         this.audioProducer.on('transportclose', () => {
-            console.log('audio transport ended')
 
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
@@ -196,7 +193,6 @@ export class WebRtcHandler {
         })
 
         this.videoProducer.on('trackended', () => {
-            console.log('video track ended')
 
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
@@ -205,7 +201,6 @@ export class WebRtcHandler {
         })
 
         this.videoProducer.on('transportclose', () => {
-            console.log('video transport ended')
 
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
@@ -214,7 +209,6 @@ export class WebRtcHandler {
         })
 
         this.cameraProducer.on('trackended', () => {
-            console.log('camera track ended')
             this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "CAMERA_FEED_LOST" })
 
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
@@ -222,7 +216,6 @@ export class WebRtcHandler {
         })
 
         this.cameraProducer.on('transportclose', () => {
-            console.log('camera transport ended')
 
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
@@ -231,7 +224,6 @@ export class WebRtcHandler {
         })
 
         this.microphoneProducer.on('trackended', () => {
-            console.log('microphone track ended')
             this.localMessageHandler.sendMessageToSocket("LOG_MESSAGE", { flagKey: "CAMERA_AUDIO_MUTED" })
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false
@@ -239,7 +231,6 @@ export class WebRtcHandler {
         })
 
         this.microphoneProducer.on('transportclose', () => {
-            console.log('microphone transport ended')
 
             chrome.runtime.sendMessage({ action: "RESTART_PROCTORING" })
             // this.connectedToRoom = false

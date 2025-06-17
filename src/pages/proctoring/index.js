@@ -1,5 +1,5 @@
-import { navigateTo } from "../../utils/router.js"
-import { sendMessageToWorker } from "../../utils/worker/sendMessage.js"
+import { navigateTo } from "@utils/router.js"
+import { sendMessageToWorker } from "@utils/worker/sendMessage.js"
 import AlertBox from "./components/AlertBox.js"
 import MessageFromMeBox from "./components/MessageFromMeBox.js"
 import MessageFromProctorBox from "./components/MessageFromProctorBox.js"
@@ -13,9 +13,11 @@ export default async function page({ user }) {
         <p class="rounded-md bg-white/10 p-1 px-2 text-center text-sm italic text-slate-300">You are being proctored,
             please be wise.</p>
     </div>
-    <div class="flex gap-4 bg-gray-800/30 p-5 border-white/10 border-b">
+    <div class="flex flex-col gap-4 bg-gray-800/30 p-5 border-white/10 border-b">
         <button class="w-full rounded-md px-5 py-2 font-semibold text-white bg-red-700 cursor-pointer" id="stop-proctoring">Stop
-            Proctor</button>
+            Proctored</button>
+        <button class="w-full rounded-md px-5 py-2 font-semibold bg-white cursor-pointer text-black" id="restart-proctoring">Restart
+            Proctored</button>
 
     </div>
     <div class="flex flex-col  bg-gray-800/30 p-5 py-1 border-white/10 border-b cursor-pointer">
@@ -73,6 +75,7 @@ export default async function page({ user }) {
 export async function setup() {
 
     const stopProctoringButton = document.getElementById('stop-proctoring')
+    const restartProctoringButton = document.getElementById('restart-proctoring')
     const infoDetailButton = document.getElementById('info-detail-button')
     const infoDetailPanel = document.getElementById('info-detail')
     const messagePlaceholder = document.getElementById('message-placeholder')
@@ -86,7 +89,15 @@ export async function setup() {
         if (data.ok) {
             navigateTo('default_auth')
         } else {
-            console.log(data.error)
+        }
+    })
+
+    restartProctoringButton.addEventListener("click", async () => {
+        const data = await sendMessageToWorker("ABORT_PROCTORING")
+        await chrome.storage.session.remove(["proctor_session", "auth", "settings", "chats"])
+        if (data.ok) {
+            navigateTo('default_auth')
+        } else {
         }
     })
 
@@ -101,14 +112,12 @@ export async function setup() {
 
         if (!isHidden && rttInterval === null) {
             rttInterval = setInterval(async () => {
-                console.log("RTT CHECK CALLED");
 
                 const response = await chrome.runtime.sendMessage({
                     action: "GET_RTT",
                 });
 
                 if (response.ok) {
-                    console.log(response)
                     pingElement.textContent = response.data.ping + " ms";
                     publicIpElement.textContent = response.data.ip
                     if (lastPings.length > 20) {
@@ -131,19 +140,10 @@ export async function setup() {
 
 
 
-    //TODO: Info Detail
-    //      -> Ping
-    //      -> Ip
-
-    //TODO: Chat Handling Using ProcspySocket.js
-    //      -> Send Message
-    //      -> Recieve Message
 
     const { chats } = await chrome.storage.session.get(["chats"])
-    console.log("render")
 
     if (chats) {
-        console.log(chats)
         chats.forEach(element => {
             if (element.from === "me") {
                 if (!messagePlaceholder.firstElementChild) {
@@ -169,7 +169,6 @@ export async function setup() {
         if (event.key === "Enter") {
             event.preventDefault();
             const body = await chatbox.value
-            // console.log(body)
             if (body != "") {
                 const data = await chrome.runtime.sendMessage({
                     action: "PRIVATE_MESSAGE",
@@ -219,9 +218,7 @@ export async function setup() {
     chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         if (message.action === "PRIVATE_MESSAGE") {
-            console.log(message.data)
             const data = message.data
-            console.log(data)
 
             if (!messagePlaceholder.firstElementChild) {
                 messagePlaceholder.appendChild(MessageFromProctorBox(data.body))

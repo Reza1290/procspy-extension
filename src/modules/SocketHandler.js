@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client'
-import { DeviceInfo } from './DeviceInfo'
+import { DeviceInfo } from './DeviceInfo.js'
 
 export class SocketHandler {
     constructor(socketUrl, authToken) {
@@ -11,7 +11,6 @@ export class SocketHandler {
     }
 
     _createSocket() {
-        console.log("Create Socket Handler")
         return io(this.socketUrl, {
             autoConnect: false,
             auth: {
@@ -22,7 +21,6 @@ export class SocketHandler {
     }
 
     async connectToSocket() {
-        console.log("Connect")
         this.socket.auth.deviceId = await DeviceInfo.getStaticDeviceId()
         
         this.socket.connect()
@@ -33,13 +31,12 @@ export class SocketHandler {
         });
         return new Promise((resolve, reject) => {
             this.socket.on('connection-success', ({ socketId }) => {
-                console.log(socketId)
                 this._isConnected = true
                 resolve(true)
             })
 
             this.socket.once("connect_error", (err) => {
-                reject(new Error(`Socket connection failed: Who Are You?`));
+                reject(new Error(`Socket connection failed: ${err}`));
             });
         })
     }

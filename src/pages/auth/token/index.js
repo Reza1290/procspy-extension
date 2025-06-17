@@ -52,7 +52,6 @@ export function setup() {
             return;
         }
         const data = await authSignIn(token)
-        console.log(data)
         if(data?.user) {
             await chrome.storage.session.set({
                 auth: {

@@ -9,7 +9,6 @@ export class MessageHandler {
 
     async sendMessageToSocket(action, payload) {
         return new Promise((resolve, reject) => {
-            // console.log("SENDING MESSAGE...", this.socket.getSocket())
             this.socket.getSocket().emit('EXTENSION_SERVER_MESSAGE', {
                 data: {
                     action, 
@@ -18,7 +17,6 @@ export class MessageHandler {
                     roomId: this.roomId
                 }
             }, (data) => {
-                // console.log(data)
                 if (data.success) {
                     resolve(data);
                 } else {

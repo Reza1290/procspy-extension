@@ -8,11 +8,11 @@
     "default_path": "index.html"
   },
   "background": {
-    "service_worker": "src/background/service-worker.js",
+    "service_worker": "scripts/background.js",
     "type": "module"
   },
   "action": {
-    "default_title": "Click to Begin"
+    "default_title": "Start Procspy"
   },
   "commands": {
     "_execute_action": {  
@@ -20,29 +20,25 @@
         "default": "Ctrl+B",
         "mac": "Command+B"
       }
-    },
-    "copyShortcut": {
-      "suggested_key": {
-        "default": "Ctrl+C"
-      },
-      "description": "Detect Copy"
-    },
-    "screenshotShortcut": {
-      "suggested_key": {
-        "default": "Alt+Tab"
-      },
-      "description": "Detect Screenshot"
     }
   },
   "host_permissions": [
     "http://*/",
     "https://*/*",
-    "https://192.168.2.5:5050/",
     "<all_urls>",
     "chrome-extension://"
     
   ],
-  
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "scripts/procspy.js",
+        "scripts/keystroke.js",
+        "page/ask.html"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "permissions": [
     "sidePanel",
     "scripting",

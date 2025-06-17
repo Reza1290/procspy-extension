@@ -12,9 +12,10 @@ export class DeviceInfo {
             ramSize: '',
             storages: [],
             displays: [],
+            cam: "",
             primaryDisplay: '',
             deviceId: '',
-            isVM: false
+            isVM: false,
         };
     }
 
@@ -137,10 +138,17 @@ export class DeviceInfo {
         });
     }
 
+    async getCamInfo() {
+        const {cam} = await chrome.storage.session.get("cam")
+
+        this.deviceInfo.cam = cam ?? ""
+    }
+
 
     async getAllInfo() {
         this.getBrowserInfo();
         this.getDeviceId()
+        await this.getCamInfo()
 
         await Promise.all([
             this.getCPUInfo(),

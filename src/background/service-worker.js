@@ -1,3 +1,4 @@
+import { globalConfig } from '../config/globalConfig.js';
 import { DeviceInfo } from '../modules/DeviceInfo.js';
 let state = {
   isWebRtcTabWatcherInitialized: false,
@@ -51,7 +52,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 
   if (changeInfo.status === 'complete' && tabId !== state.testPageTab?.id && tabId != state.webRtcShareScreenTab?.id && state.proctoringMode != false) {
-    console.log('wow  ', state)
     sendServerLogMessage("SWITCH_TAB", {
       title: tab.title,
       url: tab.url,
@@ -62,23 +62,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       chrome.scripting
         .executeScript({
           target: { tabId: tabId },
-          files: ["src/scripts/keystroke.js"],
+          files: ["scripts/keystroke.js"],
         })
-        .then(() => console.log("script injected in all frames", tab.url));
+        
     }
 
     return true
   }
 
 
-  // if (changeInfo.status === 'complete' && state.proctoringMode && state.webRtcShareScreenTab != null) {
-  //   updateDeviceInfo()
-  // }
-  // if(changeInfo.status === "complete" && tabId == state.testPageTab?.id && state.proctoringMode){
-  //   console.log("FOCUS MODE LUR")
-  //   state.focusMode = true
-  //   saveState()
-  // }
 
   return true
 })
@@ -109,7 +101,6 @@ chrome.system.display.onDisplayChanged.addListener(() => {
 chrome.windows.onFocusChanged.addListener((event) => {
   state.focusMode += 1
   if (event < 0 && state.proctoringMode && state.focusMode > 5) {
-    console.log("OFF")
     sendServerLogMessage("WINDOW_OFF", { id: event })
   }
   saveState()
@@ -194,14 +185,6 @@ const onTabUpdated = () => async (updatedTabId, changeInfo, tab) => {
 let boundOnTabRemoved = onTabRemoved();
 let boundOnTabUpdated = onTabUpdated();
 
-// function bindWatchers() {
-//   // boundOnTabRemoved = ;
-//   // boundOnTabUpdated = ;
-//   console.log("BIND WATCHERS!")
-//   ();
-// }
-// let state.webRtcShareScreenTab = null
-// let state.testPageTab = null
 
 const sendProctorMessage = (roomId, token) => {
   return new Promise((resolve, reject) => {
@@ -284,7 +267,6 @@ async function recreateWebRtcTab() {
     }
 
 
-    console.log("Re-sent PROCTOR_STARTED:", res)
   } catch (e) {
     console.error("Failed to recreate WebRTC tab:", e)
   }
@@ -296,8 +278,6 @@ function initWebRtcTabWatcher() {
   state.isWebRtcTabWatcherInitialized = true;
   state.focusMode = 0
   saveState()
-  console.log("ADD LISTENER")
-  console.log("boundOnTabUpdated", boundOnTabUpdated)
   chrome.tabs.onRemoved.addListener(boundOnTabRemoved);
   chrome.tabs.onUpdated.addListener(boundOnTabUpdated);
 }
@@ -318,7 +298,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         if (!data || !data?.session.roomId) {
           sendResponse({ ok: false, error: "Ask Proctor!" });
-          console.log("error")
           return;
         }
 
@@ -345,13 +324,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
         const res = await sendProctorMessage(data.session.roomId, data.session.token);
-        console.log("Proctor message response:", res);
 
         if (res.ok && data?.settings?.PLATFORM_DOMAIN?.value) {
           state.testPageTab = await createTab({ url: data.settings.PLATFORM_DOMAIN.value });
           const authenticate = await updateDeviceInfo()
           if(!authenticate){
-            console.log("ABORTED!", authenticate)
             stopOrAbortProctoring({notifyServer: false, sendResponse, init: false})
             sendResponse({ ok: false, error: "Ask Proctor!" })
             return
@@ -484,7 +461,6 @@ const stopOrAbortProctoring = async ({ notifyServer = false, sendResponse, init 
 
 function saveState() {
   chrome.storage.session.set(state, function () {
-    console.log("State saved:", state);
   });
 }
 
@@ -492,7 +468,6 @@ function loadState() {
   chrome.storage.session.get(null, function (data) {
     if (data) {
       state = { ...state, ...data };
-      console.log("State loaded:", state);
       if (state.proctoringMode) {
         initWebRtcTabWatcher()
       }
@@ -512,7 +487,7 @@ const signIn = async () => {
     }
 
     const { token } = auth;
-    const response = await fetch(`http://192.168.2.5:5050/api/signin/${token}`);
+    const response = await fetch(`${globalConfig.authEndpoint || "http://192.168.2.5:5050"}/api/signin/${token}`);
     const data = await response.json();
     if (!response.ok) return null
     return data
